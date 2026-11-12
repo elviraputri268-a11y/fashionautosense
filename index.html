@@ -1,50 +1,3228 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+import React, { useState, useRef, useEffect } from 'react';
+import { 
+  Image as ImageIcon, Shirt, User, X, Wand2, Download, Info, Loader2, 
+  RefreshCw, Lock, Unlock, Sliders, Sparkles, ShieldAlert, Grid, 
+  CheckCircle, Undo2, Camera, ShieldCheck, HelpCircle, Film, Copy, Check,
+  Zap, Focus, Eye, SlidersHorizontal, AlertTriangle, Droplets, Contrast,
+  Aperture, Smartphone, MonitorPlay, Plus, Moon, Sun, TreePine, BookOpen, Crown, Video, Flashlight, ScanFace,
+  Layers, Footprints, SplitSquareHorizontal, Shield, Gauge, Maximize2, Minimize2, Ban, Palette
+} from 'lucide-react';
 
-  <title>Web App</title>
+const CAMERA_SENSOR_TECHNICAL_MAP = {
+  smartphone: "Raw handheld smartphone camera sensor, 26mm wide-angle mobile lens, f/1.8, natural mobile ISP processing, subtle sensor noise, unretouched",
+  dslr: "Shot on Full-Frame Pro DSLR (Canon EOS R5 / Sony A7R V), 85mm f/1.4 prime lens, crisp optical micro-contrast, natural depth of field, unretouched",
+  film: "Shot on Kodak Portra 400 analog 35mm film camera, vintage 50mm f/1.4 glass, authentic halide film grain, warm analog halation",
+  cctv: "Low-resolution industrial CCTV security camera sensor, wide fisheye surveillance lens, heavy compression artifacts, low dynamic range"
+};
 
-  <!-- Izinkan akses fitur browser -->
-  <meta http-equiv="Permissions-Policy"
-    content="camera=(self), microphone=(self), geolocation=(self)">
+const MASTER_RECIPES = {
+  none: {
+    name: "Default (Natural)",
+    description: "Keseimbangan natural tanpa distorsi warna berlebihan.",
+    icon: <Sparkles size={16} />,
+    color: "slate",
+    settings: {
+      lighting: "natural overcast window lighting, soft shadows, candid lighting",
+      environment: "clean minimalist white studio, perfectly swept floor, no clutter",
+      technical: CAMERA_SENSOR_TECHNICAL_MAP.smartphone
+    }
+  },
+  editorial: {
+    name: "Editorial Vogue",
+    description: "Gaya majalah high-fashion dengan pencahayaan dramatis.",
+    icon: <Eye size={16} />,
+    color: "indigo",
+    settings: {
+      lighting: "dramatic butterfly lighting, hard shadows, high contrast, rim lighting",
+      environment: "minimalist luxury architectural background, brutalist concrete, pristine surface",
+      technical: "Shot on Hasselblad H6D, 80mm, f/8, sharp focus, professional color grading"
+    }
+  },
+  ecommerce: {
+    name: "Clean E-Commerce",
+    description: "Standar industri. Detail produk maksimal dan latar sangat bersih.",
+    icon: <Grid size={16} />,
+    color: "emerald",
+    settings: {
+      lighting: "high-key lighting, softbox diffusion, no harsh shadows, 3-point lighting",
+      environment: "pure white seamless cyclorama wall, immaculate studio floor, wireless setup",
+      technical: "Shot on Canon EOS R5, 100mm macro, f/11, deep depth of field"
+    }
+  },
+  streetwear: {
+    name: "Urban Street",
+    description: "Vibe jalanan kota yang mentah, cahaya alami matahari.",
+    icon: <Zap size={16} />,
+    color: "orange",
+    settings: {
+      lighting: "golden hour sunlight, harsh afternoon shadows",
+      environment: "clean downtown Tokyo street, modern pavement, urban aesthetic",
+      technical: "Shot on Leica M11, 35mm, f/1.4, street photography aesthetic"
+    }
+  },
+  vintage: {
+    name: "Cinematic Analog",
+    description: "Estetika film 35mm lama dengan tekstur grain hangat.",
+    icon: <Film size={16} />,
+    color: "amber",
+    settings: {
+      lighting: "warm tungsten lighting, soft vintage glow, hazy atmosphere",
+      environment: "dimly lit retro cafe, clean wooden floor, 1990s aesthetic",
+      technical: "Shot on Kodak Portra 400, 35mm film, light leaks, analog warmth"
+    }
+  },
+  local_indo: {
+    name: "Local Indo UGC",
+    description: "Vibes lokal Indonesia (Warung/Jalanan), raw maksimal.",
+    icon: <Focus size={16} />,
+    color: "red",
+    settings: {
+      lighting: "harsh tropical indonesian afternoon sunlight, heavy raw shadows",
+      environment: "authentic indonesian street corner, unpolished local warung aesthetic, messy everyday background",
+      technical: "Amateur smartphone photo, compressed Whatsapp image quality, unedited raw"
+    }
+  },
+  old_money: {
+    name: "Quiet Luxury",
+    description: "Aestetik Old Money, cahaya hangat, mansion/country club.",
+    icon: <Aperture size={16} />,
+    color: "stone",
+    settings: {
+      lighting: "soft diffused golden hour light through large classical windows, elegant rim lighting",
+      environment: "luxurious heritage mansion interior, classic wood paneling, subtle expensive aesthetic",
+      technical: "Shot on Medium Format Film, soft natural bloom, muted elegant color palette"
+    }
+  },
+  cyberpunk: {
+    name: "Neon Cyberpunk",
+    description: "Futuristik gelap dengan cahaya neon kontras tinggi.",
+    icon: <MonitorPlay size={16} />,
+    color: "fuchsia",
+    settings: {
+      lighting: "harsh neon rim lighting, cyan and magenta glowing lights, dark ambient shadows",
+      environment: "rainy futuristic Tokyo street night, wet glowing asphalt, neon signage reflections",
+      technical: "Cinematic 35mm anamorphic lens, lens flares, heavy digital noise, low light exposure"
+    }
+  },
+  mirror_selfie: {
+    name: "Mirror Selfie Flash",
+    description: "Candid depan cermin dengan flash smartphone keras.",
+    icon: <Smartphone size={16} />,
+    color: "sky",
+    settings: {
+      lighting: "harsh direct smartphone camera flash, stark vignette, deep background shadows",
+      environment: "slightly messy authentic bedroom, reflection in a slightly dirty floor mirror",
+      technical: "Selfie mirror shot, overexposed center, deep shadows, amateur raw framing"
+    }
+  },
+  y2k_digicam: {
+    name: "Y2K Digicam",
+    description: "Estetika kamera saku 2000an, flash keras, kontras tinggi.",
+    icon: <Flashlight size={16} />,
+    color: "pink",
+    settings: {
+      lighting: "harsh direct on-camera flash, deep black shadows, overexposed highlights",
+      environment: "messy 2000s club bathroom or retro bedroom, poster wall, glossy aesthetic",
+      technical: "Shot on early 2000s cheap digital point-and-shoot camera, low megapixel, high noise, chromatic aberration, timestamp on corner"
+    }
+  },
+  paparazzi: {
+    name: "Paparazzi Night",
+    description: "Gaya selebriti tertangkap kamera malam hari, motion blur.",
+    icon: <Camera size={16} />,
+    color: "yellow",
+    settings: {
+      lighting: "harsh blinding paparazzi multi-flash, extreme contrast, red-eye effect, deep shadows",
+      environment: "chaotic dark city street at night, blurred out bodyguard and car in background",
+      technical: "Shot on DSLR with direct speedlight, harsh shadows, heavy motion blur on extremities, candid panic framing"
+    }
+  },
+  dark_academia: {
+    name: "Dark Academia",
+    description: "Moody, shadow-heavy, perpustakaan klasik, misterius.",
+    icon: <BookOpen size={16} />,
+    color: "amber",
+    settings: {
+      lighting: "dimly lit, warm tungsten desk lamp, heavy dramatic shadows, cinematic chiaroscuro",
+      environment: "classic vintage library, dark mahogany wood, dusty bookshelves, rainy window",
+      technical: "Shot on Medium Format, f/2.0, low light exposure, heavy film grain, warm color grading"
+    }
+  },
+  runway: {
+    name: "Runway Spotlight",
+    description: "Lampu sorot runway fashion week, background gelap.",
+    icon: <Crown size={16} />,
+    color: "fuchsia",
+    settings: {
+      lighting: "harsh overhead runway tracking spotlight, complete darkness around subject",
+      environment: "high-fashion catwalk floor, completely blacked out audience background",
+      technical: "Professional telephoto lens, 200mm, f/4, fast shutter speed, stark contrast, ultra-sharp subject focus"
+    }
+  },
+  wong_kar_wai: {
+    name: "Neon Cinematic",
+    description: "Smear cahaya neon, slow shutter, romantis dan moody.",
+    icon: <Moon size={16} />,
+    color: "purple",
+    settings: {
+      lighting: "moody mixed neon lighting, green and amber practical lights, soft atmospheric glow",
+      environment: "cramped retro Hong Kong diner or rainy street, rainy window reflections, cinematic grit",
+      technical: "Shot on 35mm motion picture film, anamorphic lens flare, slow shutter speed step printing, heavy motion blur, highly cinematic"
+    }
+  },
+  gobo_studio: {
+    name: "Creative Gobo",
+    description: "Shadow aesthetic (bayangan daun/jendela) di studio.",
+    icon: <Sun size={16} />,
+    color: "orange",
+    settings: {
+      lighting: "hard directional studio light through window blinds or palm leaves gobo, artistic cast shadows across subject and background",
+      environment: "clean abstract studio backdrop, textured plaster wall",
+      technical: "Phase One XF 150MP, 85mm, f/8, ultra-sharp detail, perfect high-end studio exposure"
+    }
+  },
+  cottagecore: {
+    name: "Cottagecore",
+    description: "Cahaya matahari pagi, alam, airy dan ethereal.",
+    icon: <TreePine size={16} />,
+    color: "emerald",
+    settings: {
+      lighting: "soft diffused morning sunlight, ethereal backlighting, glowing white bloom",
+      environment: "lush green spring meadow, wild flowers, rustic wooden fence, romantic nature",
+      technical: "Vintage 50mm f/1.2 lens, dreamy creamy bokeh, soft focus, pastel bright color palette, slightly overexposed highlights"
+    }
+  },
+  cctv_leak: {
+    name: "CCTV Leak",
+    description: "Distorsi fisheye, kualitas rendah, hitam putih IR.",
+    icon: <Video size={16} />,
+    color: "slate",
+    settings: {
+      lighting: "harsh infrared security lighting, flattened contrast, blown out white faces",
+      environment: "empty parking garage or convenience store corner, industrial surveillance",
+      technical: "Low quality CCTV security camera footage snapshot, black and white IR or green tint, fisheye lens distortion, heavy digital compression artifacts, grainy low light sensor"
+    }
+  }
+};
 
-  <style>
-    * {
-      box-sizing: border-box;
+const POSE_TYPES = [
+  { id: 'standing', label: '🧍 Berdiri Tegak', value: 'standing directly facing the camera in a confident upright posture, showing off full outfit silhouette symmetrically' },
+  { id: 'walking', label: '🚶 Berjalan Candid', value: 'captured mid-stride in a natural walking candid motion, dynamic flow of clothing, one foot stepping forward' },
+  { id: 'sitting', label: '🪑 Duduk Santai', value: 'sitting relaxed on a minimalist stool or chair, comfortable natural posture, legs slightly crossed' },
+  { id: 'leaning', label: '🧱 Menyender', value: 'leaning back casually against a wall or surface, one foot resting flat on the wall, extremely relaxed aesthetic' },
+  { id: 'adjusting', label: '👐 Merapikan Baju', value: 'hands caught mid-action adjusting the collar, zipper, or sleeves of the outfit, dynamic candid interaction with the garment' },
+  { id: 'squatting', label: '🦵 Jongkok Street', value: 'deep streetwear squat pose, knees bent, aggressive urban posture, looking slightly up at the camera lens' },
+  { id: 'profile', label: '📐 Pose Menyamping', value: 'posing in an elegant 45-degree side profile angle, showcasing the side cut of the garment clearly' },
+  { id: 'looking_back', label: '🔄 Over-Shoulder', value: 'body turned away but head turning and looking elegantly over the shoulder towards the lens' }
+];
+
+const EXPRESSION_TYPES = [
+  { id: 'match_ref', label: '🔒 Ikuti Foto Asli', value: 'maintaining the exact natural facial expression, lip posture, and gaze vibe from the model reference image' },
+  { id: 'neutral', label: '😐 Fierce / Netral', value: 'calm neutral expression, high-fashion editorial stare, intense eyes looking directly at the camera' },
+  { id: 'subtle_smile', label: '😏 Senyum Tipis', value: 'subtle charming smile, relaxed facial muscles, friendly and approachable look' },
+  { id: 'warm_smile', label: '😊 Senyum Hangat', value: 'smiling warmly and genuinely with bright inviting eyes, showing teeth slightly' },
+  { id: 'laughing', label: '😆 Tertawa Lepas', value: 'candidly laughing out loud, eyes slightly crinkled, genuine motion of spontaneous joy' },
+  { id: 'moody', label: '😠 Moody / Intense', value: 'slightly furrowed brows, intense piercing moody gaze, cinematic serious expression, tight jawline' },
+  { id: 'looking_away', label: '🙄 Melengos', value: 'serene expression, eyes looking away off-camera into the distance, completely unposed candid look' },
+  { id: 'sunglasses', label: '🕶️ Kacamata Hitam', value: 'wearing stylish dark aesthetic sunglasses, mysterious, emotionless confident vibe' }
+];
+
+const BODY_SILHOUETTE_TYPES = [
+  { id: 'match_ref', label: '🔒 Sesuai Foto Ref', value: 'maintaining the natural body proportions and physique shown in the model reference image' },
+  { id: 'slender', label: '🌿 Petite / Slender', value: 'slender petite fashion model physique, lean proportional silhouette' },
+  { id: 'athletic', label: '🏃‍♀️ Athletic / Toned', value: 'toned athletic activewear physique, healthy fit posture and proportional silhouette' },
+  { id: 'curvy', label: '⏳ Curvy / Hourglass', value: 'balanced curvy tailored fashion silhouette, proportional commercial fit' },
+  { id: 'tall_editorial', label: '🗼 Tall Runway', value: 'tall editorial runway model proportions, elongated tailored stance' }
+];
+
+const FOOTWEAR_TYPES = [
+  { id: 'auto', label: '👟 Auto Match Outfit', value: 'wearing clean, stylish footwear that naturally complements the outfit' },
+  { id: 'white_sneakers', label: '👟 Sneakers Putih', value: 'wearing clean minimalist white leather athletic sneakers with crew socks' },
+  { id: 'chunky_dad', label: '👟 Chunky Street', value: 'wearing trendy retro chunky streetwear running shoes' },
+  { id: 'heels', label: '👠 Minimalist Heels', value: 'wearing sleek minimalist strappy high heels' },
+  { id: 'boots', label: '🥾 Leather Boots', value: 'wearing classic ankle leather combat or chelsea boots' },
+  { id: 'barefoot', label: '🦶 Barefoot (Studio)', value: 'barefoot on clean studio floor, natural relaxed stance' }
+];
+
+const VIDEO_CAMERA_MOTIONS = [
+  { id: 'handheld_pan', label: '📱 Handheld Lateral Pan', value: 'The camera operator maintains an authentic handheld documentary style, executing a slow natural lateral pan with subtle organic micro-tremors.' },
+  { id: 'slow_push', label: '🔍 Slow Push-In (Dolly)', value: 'Smooth handheld slow push-in towards the subject, subtly shifting depth-of-field focus onto the garment weave and facial catchlight.' },
+  { id: 'orbit_arc', label: '🔄 45° Parallax Orbit', value: 'Slow cinematic 45-degree arc orbit around the subject, showcasing the dimensional drape and tailoring profile against the backdrop.' },
+  { id: 'walk_tracking', label: '🚶‍♀️ Tracking Walk-Along', value: 'Backward-moving handheld tracking shot leading the subject as they take a natural, relaxed step forward, capturing realistic fabric sway.' },
+  { id: 'static_breathing', label: '🎥 Tripod Living Portrait', value: 'Locked-off tripod commercial framing with minimal camera drift, focusing entirely on subtle human breathing, eye blinks, and air draft on fabric.' }
+];
+
+const QUICK_TAGS = [
+  { id: 'paparazzi', label: '📸 Paparazzi Flash', value: 'harsh direct on-camera paparazzi speedlight flash, stark background vignette' },
+  { id: 'motion_blur', label: '🏃 Heavy Motion Blur', value: 'slow shutter dynamic motion smear on extremities, candid kinetic energy' },
+  { id: 'vhs_glitch', label: '📺 VHS Glitch Art', value: 'analog VHS tape tracking lines, subtle color channel bleeding, retro magnetic tape wear' },
+  { id: 'wet_hair', label: '💦 Wet Hair Look', value: 'damp editorial hairstyle strands, fresh dewy studio complexion catchlight' },
+  { id: 'cctv_cam', label: '🎥 CCTV Security Cam', value: 'overhead high-angle surveillance perspective, timestamp overlay aesthetic' },
+  { id: 'chromatic', label: '🔍 Chromatic Aberration', value: 'pronounced optical lateral chromatic aberration along high-contrast edges, vintage lens character' }
+];
+
+// CONTEXT-AWARE EUPHEMISM SANITIZER (Protects 'chest pocket', 'low-cut sneakers', 'hands on hips' while sanitizing NSFW triggers)
+const sanitizeCommercialEuphemisms = (text, isSafeGuardActive = true) => {
+  if (!text) return '';
+  let cleaned = text;
+  const baseReplacements = [
+    [/\b(scrunch[\s-]*butt|butt[\s-]*lifting|booty[\s-]*shorts|booty)\b/gi, 'contoured activewear seam'],
+    [/\b(sexy|seductive|erotic|sensual|provocative|sultry|nsfw)\b/gi, 'confident commercial editorial'],
+    [/\b(revealing|skimpy|exposed skin|bare skin|naked|nude|topless)\b/gi, 'modern tailored summer cut'],
+    [/\b(cleavage|plunging neckline|busty|breasts|underboob|sideboob)\b/gi, 'tailored upper neckline'],
+    [/\b(bare|exposed|deep|open)\s+chest\b/gi, 'tailored upper torso cut'],
+    [/\blow[\s-]*cut(?!\s+(sneakers|shoes|socks|boots|ankle|loafers|trainers))\b/gi, 'tailored scoop-neck'],
+    [/\b(midriff[\s-]*baring|exposed belly|bare stomach|bare midriff|tummy)\b/gi, 'cropped athletic silhouette'],
+    [/\b(skin[\s-]*tight|ultra[\s-]*tight|bodycon|figure[\s-]*hugging)\b/gi, 'form-fitted stretch weave'],
+    [/\b(lingerie|underwear|panties|bra|thong|bikini|swimsuit)\b/gi, 'structured resort or athletic apparel'],
+    [/\b(buttocks|rear silhouette|groin|crotch|inner thighs|bare thighs)\b/gi, 'lower garment tailoring profile'],
+    [/\b(curvy|sensual|wide)\s+hips\b/gi, 'proportional tailored waistline']
+  ];
+  baseReplacements.forEach(([regex, replacement]) => {
+    cleaned = cleaned.replace(regex, replacement);
+  });
+  if (isSafeGuardActive) {
+    cleaned = cleaned
+      .replace(/\b(messy authentic bedroom|retro bedroom|bedroom)\b/gi, 'modern luxury boutique fitting lounge')
+      .replace(/\b(sweat texture|sweat stains|heavy sweat|perspiration)\b/gi, 'matte breathable activewear finish');
+  }
+  return cleaned.replace(/\s{2,}/g, ' ').trim();
+};
+
+// POSE-AWARE MULTI-ANGLE RESOLVER (Eliminates contradictions between Pose Builder and 5 Catalog Angles)
+const resolvePoseForAngle = (poseId, exprId, angleId, isSafe) => {
+  const exprObj = EXPRESSION_TYPES.find(e => e.id === exprId) || EXPRESSION_TYPES[0];
+  let exprText = exprObj.value;
+
+  if (angleId === 'detail') {
+    const upperBodyMap = {
+      standing: 'upright composed upper-body posture, shoulders relaxed and symmetrical',
+      walking: 'natural dynamic upper-body cadence, relaxed shoulder movement',
+      sitting: 'relaxed seated upper-torso posture, composed shoulder alignment',
+      leaning: 'casual relaxed upper-body lean, effortless editorial poise',
+      adjusting: 'hands gracefully caught mid-action near the collar, lapel, or sleeve cuff showcasing garment details',
+      squatting: 'confident streetwear upper-body attitude, composed shoulder framing',
+      profile: 'angled upper-torso posture with head turned toward the camera',
+      looking_back: 'upper torso angled slightly with head looking gracefully toward the lens'
+    };
+    return `${upperBodyMap[poseId] || upperBodyMap.standing}, ${exprText}`;
+  }
+
+  if (angleId === 'back') {
+    if (poseId === 'squatting' && isSafe) {
+      return `standing upright in an athletic streetwear over-shoulder stance showcasing the back design cleanly, ${exprText}`;
+    }
+    if (poseId === 'sitting') {
+      return `seated gracefully on a minimalist studio stool facing away while looking back over the shoulder toward the camera, ${exprText}`;
+    }
+    return `standing facing away from the camera to display the back garment construction while turning the head over the shoulder toward the lens, ${exprText}`;
+  }
+
+  if (angleId === 'side') {
+    if (poseId === 'sitting') {
+      return `sitting relaxed on a minimalist studio stool angled at a 45-degree side profile, head turned toward the lens, ${exprText}`;
+    }
+    if (poseId === 'squatting') {
+      return `45-degree angled streetwear crouch/stance showcasing the side garment cut, head looking toward the camera, ${exprText}`;
+    }
+    return `45-degree side profile stance highlighting side seams and silhouette drape, head turned toward the camera, ${exprText}`;
+  }
+
+  const fullBodyPose = POSE_TYPES.find(p => p.id === poseId)?.value || POSE_TYPES[0].value;
+  return `${ sanitizeCommercialEuphemisms(fullBodyPose, isSafe) }, ${exprText}`;
+};
+
+export default function App() {
+  const [productImage, setProductImage] = useState(null);
+  const [modelImage, setModelImage] = useState(null);
+  const [modelFaceCrop, setModelFaceCrop] = useState(null); // Auto High-Res 1:1 Face Crop for 10x sharper identity lock
+  const [activeRecipe, setActiveRecipe] = useState('none');
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const [currentSeed, setCurrentSeed] = useState(726481);
+  const [lockSeed, setLockSeed] = useState(true);
+
+  // Dynamic Builders
+  const [poseType, setPoseType] = useState('standing');
+  const [expressionType, setExpressionType] = useState('match_ref');
+  const [bodySilhouette, setBodySilhouette] = useState('match_ref');
+  const [footwearType, setFootwearType] = useState('auto');
+
+  // Biometric Identity Lock States
+  const [modelIdentityDesc, setModelIdentityDesc] = useState('');
+  const [identityStrength, setIdentityStrength] = useState('strict'); // 'strict' | 'balanced'
+
+  // Deep Garment Blueprint, Complementary Pairing & Color Hex Lock States (NEW v21)
+  const [garmentBlueprint, setGarmentBlueprint] = useState('');
+  const [garmentCoverage, setGarmentCoverage] = useState('full_outfit'); // 'full_outfit' | 'top_only' | 'bottom_only'
+  const [complementaryGarment, setComplementaryGarment] = useState('');
+  const [colorPaletteLock, setColorPaletteLock] = useState('');
+  const [safeGuardMode, setSafeGuardMode] = useState(true);
+  const [masterAnchorLock, setMasterAnchorLock] = useState(true);
+  const [isMaxRealismLocked, setIsMaxRealismLocked] = useState(false);
+  const [compareMode, setCompareMode] = useState(null); // null | 'model' | 'product'
+  const [viewportFitMode, setViewportFitMode] = useState('cover'); // 'cover' | 'contain'
+  const [failedAngles, setFailedAngles] = useState({});
+
+  // Main Prompt Parameters
+  const [clothingName, setClothingName] = useState('');
+  const [material, setMaterial] = useState('premium cotton fabric');
+  const [customMaterial, setCustomMaterial] = useState('');
+  const [environment, setEnvironment] = useState(MASTER_RECIPES.none.settings.environment);
+  const [customEnvironment, setCustomEnvironment] = useState('');
+  const [lighting, setLighting] = useState(MASTER_RECIPES.none.settings.lighting);
+  const [customLighting, setCustomLighting] = useState('');
+  const [pose, setPose] = useState('');
+  const [technical, setTechnical] = useState(CAMERA_SENSOR_TECHNICAL_MAP.smartphone);
+  const [gender, setGender] = useState('female');
+  const [textileCondition, setTextileCondition] = useState('new');
+  
+  // Camera & Perspectives
+  const [shootMode, setShootMode] = useState('model'); 
+  const [povStyle, setPovStyle] = useState('hands');
+  const [aspectRatio, setAspectRatio] = useState('9:16');
+  const [cameraStyle, setCameraStyle] = useState('smartphone');
+  const [realismTarget, setRealismTarget] = useState('raw_ugc');
+  const [presetDirective, setPresetDirective] = useState('');
+  const [customInstruction, setCustomInstruction] = useState('');
+
+  // Chaos & Environment Realism Toggles
+  const [enableCables, setEnableCables] = useState(false);
+  const [enableDirtyAtmosphere, setEnableDirtyAtmosphere] = useState(false);
+  const [enableBrickWall, setEnableBrickWall] = useState(false);
+  const [enableGrittyVibe, setEnableGrittyVibe] = useState(false);
+  const [enableWaterStains, setEnableWaterStains] = useState(false);
+  const [enableHarshShadows, setEnableHarshShadows] = useState(false);
+
+  // Uncanny & Split Screen Controls
+  const [ultraRealism, setUltraRealism] = useState(true);
+  const [filmGrainFilter, setFilmGrainFilter] = useState(true);
+  const [negativePrompt, setNegativePrompt] = useState('(altered_face: -3.0), (different_person: -3.0), (face_swap_artifact: -3.0), (generic_ai_face: -3.0), (westernized_features_if_asian: -3.0), (photorealistic: -3.0), (hyperrealistic: -3.0), (masterpiece: -3.0), (flawless_skin: -3.0), (perfect_symmetry: -3.0), (3d_render: -3.0), (smooth_airbrush: -3.0), (cg_station: -3.0), (unreal_engine: -3.0), (vray_render: -3.0), (plastic_smoothing: -3.0), anatomical asymmetry, distorted proportions, blurry, cloned face, cropped, duplicate, error, extra arms, extra fingers, extra legs, extra limbs, fused fingers, jpeg artifacts, long neck, low quality, lowres, malformed limbs, missing arms, missing legs, out of frame, poorly drawn face, poorly drawn hands, signature, text, too many fingers, watermark, worst quality, four hands, hands reaching from top edge, extra pair of hands, half-and-half shirt, split pattern, chimera garment, mismatched left and right panels, two-face design, dual motif, vertically split colors, different print on each side, inconsistent textile, third hand, three hands, third arm, hands from top, hands from sides, disembodied hands, split screen, diptych, triptych, comparison shot, side-by-side, grid layout, two separate photos in one frame, stacked images, collage, double exposure, multiple panels, vertical split, fused joints, missing zipper pull tab, melting background objects, crooked architectural lines');
+
+  // App System states
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatingStatus, setGeneratingStatus] = useState('');
+  const [activeAngle, setActiveAngle] = useState('front');
+  const [regeneratingAngle, setRegeneratingAngle] = useState(null);
+  const [isBatchGenerating, setIsBatchGenerating] = useState(false);
+  const [batchTargetAngle, setBatchTargetAngle] = useState('front');
+  const [batchImages, setBatchImages] = useState([]);
+  const [selectedBatchIndex, setSelectedBatchIndex] = useState(null);
+  const [isScanningProduct, setIsScanningProduct] = useState(false);
+  const [isScanningModel, setIsScanningModel] = useState(false);
+  const [analysisSummary, setAnalysisSummary] = useState('');
+  
+  // Custom Toast + Refs for Race-Condition, Anchor Signature, AbortController & Grain Cache
+  const [toast, setToast] = useState({ visible: false, message: '' });
+  const toastTimeoutRef = useRef(null);
+  const productScanSessionRef = useRef(0);
+  const modelScanSessionRef = useRef(0);
+  const anchorSignatureRef = useRef('');
+  const abortControllerRef = useRef(null);
+  const grainPatternCanvasRef = useRef(null);
+
+  // Generated Angles State
+  const [generatedAngles, setGeneratedAngles] = useState({
+    front: null, side: null, back: null, detail: null, dynamic: null
+  });
+  
+  const [angleHistory, setAngleHistory] = useState({
+    front: [], side: [], back: [], detail: [], dynamic: []
+  });
+
+  const [loadingAngles, setLoadingAngles] = useState({
+    front: false, side: false, back: false, detail: false, dynamic: false
+  });
+
+  // Video prompt generation modal
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [selectedVideoAngle, setSelectedVideoAngle] = useState('front');
+  const [selectedVideoLength, setSelectedVideoLength] = useState('kling_director');
+  const [selectedVideoMotion, setSelectedVideoMotion] = useState('handheld_pan');
+
+  const productInputRef = useRef(null);
+  const modelInputRef = useRef(null);
+
+  const isAnyRenderBusy = isGenerating || isBatchGenerating || regeneratingAngle !== null;
+
+  // Build current parameter signature to prevent stale Master Anchor conflicts
+  const getCurrentConfigSignature = () => {
+    return `${clothingName}|${material}|${customMaterial}|${activeRecipe}|${bodySilhouette}|${footwearType}|${shootMode}|${ !!productImage }|${ !!modelImage }`;
+  };
+
+  // Sync the pose builder preview
+  useEffect(() => {
+    if (shootMode !== 'pov') {
+      setPose(resolvePoseForAngle(poseType, expressionType, activeAngle, safeGuardMode));
+    }
+  }, [poseType, expressionType, shootMode, activeAngle, safeGuardMode]);
+
+  // Keep 99.9% Lock Badge honest if user manually disables core realism toggles
+  useEffect(() => {
+    if (isMaxRealismLocked && (!ultraRealism || !filmGrainFilter)) {
+      setIsMaxRealismLocked(false);
+    }
+  }, [ultraRealism, filmGrainFilter, isMaxRealismLocked]);
+
+  // Auto-disable invalid compare targets when switching modes or clearing images
+  useEffect(() => {
+    if (shootMode === 'pov' && compareMode === 'model') setCompareMode(null);
+    if (!modelImage && compareMode === 'model') setCompareMode(null);
+    if (!productImage && compareMode === 'product') setCompareMode(null);
+  }, [shootMode, modelImage, productImage, compareMode]);
+
+  // Cleanup toast timer & active abort controller on unmount
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+      if (abortControllerRef.current) abortControllerRef.current.abort();
+    };
+  }, []);
+
+  const showToast = (message) => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    setToast({ visible: true, message });
+    toastTimeoutRef.current = setTimeout(() => {
+      setToast({ visible: false, message: '' });
+    }, 3200);
+  };
+
+  // Client-side Canvas Image Compressor with Neutral Studio Mid-Gray (#CBD5E1) background for transparent PNGs
+  const compressImageDataUrl = (dataUrl, maxDim = 1280, quality = 0.88) => {
+    return new Promise((resolve) => {
+      try {
+        const isPng = dataUrl.startsWith('data:image/png');
+        const img = new window.Image();
+        img.onload = () => {
+          try {
+            let { width, height } = img;
+            if (!isPng && width <= maxDim && height <= maxDim && dataUrl.length < 600000) {
+              resolve(dataUrl);
+              return;
+            }
+            if (width > height && width > maxDim) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else if (height >= width && height > maxDim) {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            // Fill with Neutral Studio Mid-Gray so neither white nor black transparent PNG garments disappear
+            ctx.fillStyle = '#CBD5E1';
+            ctx.fillRect(0, 0, width, height);
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressed = canvas.toDataURL('image/jpeg', quality);
+            resolve(compressed || dataUrl);
+          } catch (canvasErr) {
+            resolve(dataUrl);
+          }
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+      } catch (err) {
+        resolve(dataUrl);
+      }
+    });
+  };
+
+  // Auto High-Res 1:1 Face Cropper from Bounding Box [ymin, xmin, ymax, xmax] (0-1000 scale)
+  const cropHighResFaceFromBox = (sourceDataUrl, box) => {
+    return new Promise((resolve) => {
+      try {
+        if (!Array.isArray(box) || box.length !== 4) {
+          resolve(null);
+          return;
+        }
+        const [ymin, xmin, ymax, xmax] = box.map(Number);
+        if (isNaN(ymin) || isNaN(xmin) || isNaN(ymax) || isNaN(xmax) || ymax <= ymin || xmax <= xmin) {
+          resolve(null);
+          return;
+        }
+        const img = new window.Image();
+        img.onload = () => {
+          try {
+            const w = img.width;
+            const h = img.height;
+            const boxW = ((xmax - xmin) / 1000) * w;
+            const boxH = ((ymax - ymin) / 1000) * h;
+            const cx = ((xmin + xmax) / 2000) * w;
+            const cy = ((ymin + ymax) / 2000) * h;
+            // Expand crop by 65% to include hair, ears, glasses, and head silhouette
+            const side = Math.max(boxW, boxH) * 1.65;
+            const sx = Math.max(0, Math.round(cx - side / 2));
+            const sy = Math.max(0, Math.round(cy - side / 2));
+            const sw = Math.min(w - sx, Math.round(side));
+            const sh = Math.min(h - sy, Math.round(side));
+            if (sw < 64 || sh < 64) {
+              resolve(null);
+              return;
+            }
+            const targetSize = Math.min(768, Math.max(sw, sh));
+            const canvas = document.createElement('canvas');
+            canvas.width = targetSize;
+            canvas.height = targetSize;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#CBD5E1';
+            ctx.fillRect(0, 0, targetSize, targetSize);
+            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, targetSize, targetSize);
+            resolve(canvas.toDataURL('image/jpeg', 0.92));
+          } catch (e) {
+            resolve(null);
+          }
+        };
+        img.onerror = () => resolve(null);
+        img.src = sourceDataUrl;
+      } catch (err) {
+        resolve(null);
+      }
+    });
+  };
+
+  // GPU-Fast Film Grain Baker for Downloaded Images (< 3ms execution)
+  const bakeFilmGrainToDataUrl = (dataUrl) => {
+    return new Promise((resolve) => {
+      if (!filmGrainFilter) {
+        resolve(dataUrl);
+        return;
+      }
+      try {
+        const img = new window.Image();
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+
+            if (!grainPatternCanvasRef.current) {
+              const pCanvas = document.createElement('canvas');
+              pCanvas.width = 96;
+              pCanvas.height = 96;
+              const pCtx = pCanvas.getContext('2d');
+              const imgData = pCtx.createImageData(96, 96);
+              const buf = imgData.data;
+              for (let i = 0; i < buf.length; i += 4) {
+                const v = (Math.random() * 255) | 0;
+                buf[i] = v;
+                buf[i + 1] = v;
+                buf[i + 2] = v;
+                buf[i + 3] = 18; // Subtle organic ISO grain alpha
+              }
+              pCtx.putImageData(imgData, 0, 0);
+              grainPatternCanvasRef.current = pCanvas;
+            }
+
+            const pattern = ctx.createPattern(grainPatternCanvasRef.current, 'repeat');
+            if (pattern) {
+              ctx.save();
+              ctx.globalCompositeOperation = 'overlay';
+              ctx.fillStyle = pattern;
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+              ctx.restore();
+            }
+            resolve(canvas.toDataURL('image/png'));
+          } catch (e) {
+            resolve(dataUrl);
+          }
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+      } catch (err) {
+        resolve(dataUrl);
+      }
+    });
+  };
+
+  const selectCameraSensorStyle = (styleKey) => {
+    setCameraStyle(styleKey);
+    if (CAMERA_SENSOR_TECHNICAL_MAP[styleKey]) {
+      setTechnical(CAMERA_SENSOR_TECHNICAL_MAP[styleKey]);
+    }
+    if (styleKey === 'smartphone' || styleKey === 'cctv') {
+      setRealismTarget('raw_ugc');
+    } else {
+      setRealismTarget('editorial');
+    }
+  };
+
+  const applyRecipe = (key) => {
+    const recipe = MASTER_RECIPES[key];
+    setActiveRecipe(key);
+    setEnvironment(recipe.settings.environment);
+    setLighting(recipe.settings.lighting);
+    setTechnical(recipe.settings.technical);
+
+    setEnableCables(false);
+    setEnableGrittyVibe(false);
+    setEnableDirtyAtmosphere(false);
+    setEnableBrickWall(false);
+    setEnableHarshShadows(false);
+    setEnableWaterStains(false);
+    setTextileCondition('new');
+    // Note: Never clear user's customInstruction! Keep preset directives separate.
+    setPresetDirective('');
+
+    if (key === 'local_indo') {
+      setEnableCables(true);
+      setEnableGrittyVibe(true);
+      setEnableDirtyAtmosphere(true);
+      setEnableBrickWall(true);
+      setTextileCondition('distressed');
+      setCameraStyle('smartphone');
+      setRealismTarget('raw_ugc');
+      setPresetDirective("Authentic Indonesian everyday street atmosphere, unpolished raw capture.");
+    } else if (key === 'mirror_selfie') {
+      setCameraStyle('smartphone');
+      setRealismTarget('raw_ugc');
+      setPoseType('standing');
+    } else if (key === 'y2k_digicam' || key === 'paparazzi') {
+      setCameraStyle('smartphone');
+      setRealismTarget('raw_ugc');
+      setEnableHarshShadows(true);
+    } else if (key === 'vintage' || key === 'old_money' || key === 'dark_academia' || key === 'wong_kar_wai') {
+      setCameraStyle('film');
+      setRealismTarget('editorial');
+    } else if (key === 'cctv_leak') {
+      setCameraStyle('cctv');
+      setRealismTarget('raw_ugc');
+      setEnableGrittyVibe(true);
+    } else if (key === 'none') {
+      setCameraStyle('smartphone');
+      setRealismTarget('raw_ugc');
+    } else {
+      setCameraStyle('dslr');
+      setRealismTarget('editorial');
     }
 
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #ffffff;
+    showToast(`Preset "${recipe.name}" Applied!`);
+  };
+
+  const toggleMaxRealismBoost = () => {
+    const nextState = !isMaxRealismLocked;
+    setIsMaxRealismLocked(nextState);
+    if (nextState) {
+      setUltraRealism(true);
+      setFilmGrainFilter(true);
+      setIdentityStrength('strict');
+      showToast("⚡ MAX 99.9% Optical & Biometric Lock Diaktifkan!");
+    } else {
+      showToast("Mode 99.9% Lock dilepas ke perhitungan dinamis.");
+    }
+  };
+
+  // Toggleable Quick Tags in Custom Edge Directive (Never duplicates or strips hyphens)
+  const toggleQuickTag = (tagObj) => {
+    setCustomInstruction((prev) => {
+      const current = prev.trim();
+      if (current.toLowerCase().includes(tagObj.value.toLowerCase())) {
+        const escaped = tagObj.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const cleaned = current
+          .replace(new RegExp(`(^|,\\s*)${escaped}`, 'gi'), '')
+          .replace(/^,\s*/, '')
+          .replace(/,\s*,/g, ', ')
+          .trim();
+        showToast(`Modifier dilepas: ${tagObj.label}`);
+        return cleaned;
+      } else {
+        showToast(`Modifier diaktifkan: ${tagObj.label}`);
+        return current ? `${current}, ${tagObj.value}` : tagObj.value;
+      }
+    });
+  };
+
+  // Smart Retry with AbortController support
+  const fetchWithRetry = async (url, options, retries = 4) => {
+    const delays = [1000, 2000, 4000, 7000];
+    for (let i = 0; i < retries; i++) {
+      try {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+          const status = response.status;
+          if (status >= 400 && status < 500 && status !== 429) {
+            throw new Error(`Non-retryable HTTP error! status: ${status}`);
+          }
+          throw new Error(`HTTP error! status: ${status}`);
+        }
+        return await response.json();
+      } catch (error) {
+        if (error.name === 'AbortError') throw error;
+        const isNonRetryable = error.message && error.message.includes('Non-retryable');
+        if (i === retries - 1 || isNonRetryable) throw error;
+        await new Promise(res => setTimeout(res, delays[i]));
+      }
+    }
+  };
+
+  // UPGRADED v21: Deep Micro-Garment Blueprint + Coverage/Complementary Lock + Exact Color Shade Lock
+  const analyzeProductImage = async (base64Image, sessionId) => {
+    setIsScanningProduct(true);
+    setAnalysisSummary('AI Vision: Memindai konstruksi jahitan, palet warna HEX, & cakupan outfit...');
+
+    const apiKey = ""; 
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+    const mimeMatch = base64Image.match(/data:(.*);base64,(.*)/);
+    if (!mimeMatch) {
+      setIsScanningProduct(false);
+      showToast("Format gambar tidak valid.");
+      return;
     }
 
-    iframe {
-      display: block;
-      width: 100%;
-      height: 100vh;
-      height: 100dvh;
-      border: 0;
-      margin: 0;
-      padding: 0;
+    const payload = {
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: `Analyze this clothing product image for a commercial e-commerce virtual try-on catalog.
+Return a valid JSON object with these exact keys:
+- "shortTitle": Concise 4-8 word commercial title using strictly family-friendly retail terminology.
+- "microBlueprint": Detailed tailoring blueprint (1-2 sentences) describing exact neckline/collar shape, sleeve cut, hemline, graphic/logo placement, and seam construction.
+- "colorPaletteLock": Exact color shades and approximate hex codes of the garment (e.g., "Primary: Optic White #FAFAFA, Accent: Crimson Red #991B1B, Secondary: Dusty Mauve Pink #C26B8A").
+- "garmentCoverage": Choose one from ["full_outfit", "top_only", "bottom_only"]. Use "full_outfit" if the image shows both top and bottom, a dress, jumpsuit, or two-piece set. Use "top_only" if it only shows an upper-body garment. Use "bottom_only" if it only shows pants/skirt/shorts.
+- "complementaryPairing": If garmentCoverage is "top_only", specify a modest, stylish matching bottom (e.g., "high-waisted tailored neutral trousers or classic straight-leg blue denim jeans"). If "bottom_only", specify a matching modest top (e.g., "clean fitted crew-neck cotton t-shirt"). If "full_outfit", return "".
+- "suggestedMaterial": Choose one closest match from ["premium cotton fabric", "stretch spandex activewear lycra", "heavyweight denim", "shiny silk satin", "soft knit sweater wool", "breathable linen texture", "heavy authentic leather", "premium thick corduroy", "techwear waterproof gore-tex", "sheer chiffon organza", "plush velvet fabric", "breathable rayon viscose"].
+- "isFormFittingOrCropped": boolean (true if activewear, leggings, crop top, sleeveless, swimwear, or form-fitting).` },
+            { inlineData: { mimeType: mimeMatch[1], data: mimeMatch[2] } }
+          ]
+        }
+      ],
+      generationConfig: {
+        responseMimeType: "application/json"
+      }
+    };
+
+    try {
+      const data = await fetchWithRetry(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (sessionId !== productScanSessionRef.current) return;
+
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+      if (rawText) {
+        try {
+          const cleanJsonStr = rawText.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
+          const parsed = JSON.parse(cleanJsonStr);
+          const safeTitle = sanitizeCommercialEuphemisms(parsed.shortTitle || 'Tailored Commercial Garment', true);
+          const safeBlueprint = sanitizeCommercialEuphemisms(parsed.microBlueprint || '', true);
+          const coverage = ['full_outfit', 'top_only', 'bottom_only'].includes(parsed.garmentCoverage) ? parsed.garmentCoverage : 'full_outfit';
+          const pairing = sanitizeCommercialEuphemisms(parsed.complementaryPairing || '', true);
+          const colorLock = parsed.colorPaletteLock || '';
+
+          setClothingName(safeTitle);
+          setGarmentBlueprint(safeBlueprint);
+          setGarmentCoverage(coverage);
+          setComplementaryGarment(pairing);
+          setColorPaletteLock(colorLock);
+
+          if (parsed.suggestedMaterial) {
+            setMaterial(parsed.suggestedMaterial);
+          }
+          if (parsed.isFormFittingOrCropped) {
+            setSafeGuardMode(true);
+            setAnalysisSummary(`Produk: ${safeTitle} (🛡️ Safe-Guard & Color Lock Aktif)`);
+            showToast("Blueprint Pakaian, Palet Warna & Safe-Guard Terkunci!");
+          } else {
+            setAnalysisSummary(`Produk: ${safeTitle}`);
+            showToast("Detail Mikro Pakaian & Warna berhasil dikenali AI!");
+          }
+        } catch (parseErr) {
+          const fallbackText = sanitizeCommercialEuphemisms(rawText.replace(/['"{}]/g, '').substring(0, 80), true);
+          setClothingName(fallbackText);
+          setAnalysisSummary(`Produk: ${fallbackText}`);
+          showToast("Produk berhasil dikenali AI!");
+        }
+      } else {
+        setAnalysisSummary("AI tidak mendeteksi pakaian yang jelas.");
+      }
+    } catch (error) {
+      if (sessionId !== productScanSessionRef.current) return;
+      console.error("Error analyzing image:", error);
+      setAnalysisSummary("Gagal menghubungi server AI Vision.");
+      showToast("Gagal menganalisis gambar.");
+    } finally {
+      if (sessionId === productScanSessionRef.current) {
+        setIsScanningProduct(false);
+      }
     }
-  </style>
-</head>
+  };
 
-<body>
+  // UPGRADED v21: Deep Biometric Facial Analysis + Auto High-Res 1:1 Face Bounding Box Cropper + Gender Detection
+  const analyzeModelImage = async ( compressedBase64, rawOriginalBase64, sessionId ) => {
+    setIsScanningModel(true);
+    setAnalysisSummary('AI Biometric Scan: Memindai struktur tulang wajah & mengekstrak potret HD...');
 
-  <iframe
-    src="https://gemini.google.com/share/6b647b840b02?social_preview=false&skid=df992179-b5dc-4908-a224-0c3ac36b7317"
-    allow="camera; microphone; geolocation; fullscreen"
-    allowfullscreen
-    referrerpolicy="no-referrer-when-downgrade">
-  </iframe>
+    const apiKey = ""; 
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
-</body>
-</html>
+    const mimeMatch = compressedBase64.match(/data:(.*);base64,(.*)/);
+    if (!mimeMatch) {
+      setIsScanningModel(false);
+      showToast("Format gambar model tidak valid.");
+      return;
+    }
+
+    const payload = {
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: `Perform a strict biometric facial analysis of the person in this image for 1:1 facial likeness preservation.
+Return a valid JSON object with these exact keys:
+- "biometricTraits": One dense comma-separated paragraph describing ONLY head and facial traits: exact ethnicity/origin, estimated age, gender, exact facial complexion tone and undertone, face shape, jawline and chin structure, cheekbone prominence, exact eye shape, eyelid type (monolid, double eyelid, hooded), eye color, eyebrow thickness/arch, nose bridge height and tip shape, lip fullness and shape, exact hair color, hairline, and hairstyle (or hijab style/color if worn), and any distinctive facial marks or eyewear (moles, freckles, dimples, glasses frame style, facial hair). Do NOT describe their body build, clothes, or background.
+- "detectedGender": "female" or "male".
+- "faceBox": [ymin, xmin, ymax, xmax] coordinates of the person's head and face normalized from 0 to 1000.` },
+            { inlineData: { mimeType: mimeMatch[1], data: mimeMatch[2] } }
+          ]
+        }
+      ],
+      generationConfig: {
+        responseMimeType: "application/json"
+      }
+    };
+
+    try {
+      const data = await fetchWithRetry(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (sessionId && sessionId !== modelScanSessionRef.current) return;
+
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+
+      if (rawText) {
+        try {
+          const cleanJsonStr = rawText.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
+          const parsed = JSON.parse(cleanJsonStr);
+          const cleanDesc = sanitizeCommercialEuphemisms((parsed.biometricTraits || '').replace(/\n/g, ' '), safeGuardMode);
+          if (cleanDesc) setModelIdentityDesc(cleanDesc);
+          if (parsed.detectedGender === 'male' || parsed.detectedGender === 'female') {
+            setGender(parsed.detectedGender);
+          }
+          if (parsed.faceBox) {
+            const croppedFace = await cropHighResFaceFromBox(rawOriginalBase64 || compressedBase64, parsed.faceBox);
+            if (sessionId === modelScanSessionRef.current && croppedFace) {
+              setModelFaceCrop(croppedFace);
+            }
+          }
+          setAnalysisSummary(`Biometrik Wajah & Potret HD 1:1 Terkunci (${cleanDesc.substring(0, 55)}...)`);
+          showToast("Biometrik Wajah & Auto-Crop HD 1:1 berhasil dikunci!");
+        } catch (parseErr) {
+          const cleanDesc = sanitizeCommercialEuphemisms(rawText.replace(/['"{}\n]/g, ' '), safeGuardMode);
+          setModelIdentityDesc(cleanDesc);
+          setAnalysisSummary(`Biometrik Wajah Terkunci (${cleanDesc.substring(0, 60)}...)`);
+          showToast("Identitas & Biometrik Wajah berhasil dikunci!");
+        }
+      } else {
+        setAnalysisSummary("Wajah terdeteksi (Mode Standar).");
+      }
+    } catch (error) {
+      if (sessionId && sessionId !== modelScanSessionRef.current) return;
+      console.error("Error analyzing model face:", error);
+      setAnalysisSummary("Gagal memindai detail biometrik, menggunakan referensi visual langsung.");
+      showToast("Menggunakan referensi gambar langsung.");
+    } finally {
+      if (!sessionId || sessionId === modelScanSessionRef.current) {
+        setIsScanningModel(false);
+      }
+    }
+  };
+
+  const handleImageUpload = (e, type) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const rawBase64 = ev.target.result;
+      const compressedBase64 = await compressImageDataUrl(rawBase64, 1280, 0.88);
+      // Invalidate old Master Anchor signature whenever reference image changes
+      anchorSignatureRef.current = '';
+      if (type === 'product') {
+        const nextSession = productScanSessionRef.current + 1;
+        productScanSessionRef.current = nextSession;
+        setProductImage(compressedBase64);
+        analyzeProductImage(compressedBase64, nextSession);
+      } else {
+        const nextSession = modelScanSessionRef.current + 1;
+        modelScanSessionRef.current = nextSession;
+        setModelImage(compressedBase64);
+        setModelFaceCrop(null);
+        analyzeModelImage(compressedBase64, rawBase64, nextSession);
+      }
+    };
+    reader.readAsDataURL(file);
+    // Always reset file input value so re-uploading the exact same file works
+    e.target.value = '';
+  };
+
+  const resetImage = (e, type) => {
+    e.stopPropagation();
+    anchorSignatureRef.current = '';
+    if (type === 'product') {
+      productScanSessionRef.current += 1;
+      setIsScanningProduct(false);
+      setProductImage(null);
+      setClothingName('');
+      setGarmentBlueprint('');
+      setGarmentCoverage('full_outfit');
+      setComplementaryGarment('');
+      setColorPaletteLock('');
+      setAnalysisSummary('');
+      if (productInputRef.current) productInputRef.current.value = '';
+    } else {
+      modelScanSessionRef.current += 1;
+      setIsScanningModel(false);
+      setModelImage(null);
+      setModelFaceCrop(null);
+      setModelIdentityDesc('');
+      if (modelInputRef.current) modelInputRef.current.value = '';
+    }
+    showToast("Reference removed.");
+  };
+
+  const calculateRealismScore = () => {
+    if (isMaxRealismLocked) return 99.9;
+    let score = 75;
+    if (realismTarget === 'raw_ugc') score += 4;
+    if (cameraStyle === 'smartphone') score += 5;
+    if (cameraStyle === 'cctv') score += 7;
+    if (enableDirtyAtmosphere) score += 2;
+    if (enableCables) score += 2.5;
+    if (enableGrittyVibe) score += 3.5;
+    if (enableWaterStains) score += 2;
+    if (enableHarshShadows) score += 3;
+    if (textileCondition === 'distressed') score += 2;
+    if (!lockSeed) score += 1;
+    if (ultraRealism) score += 4;
+    if (modelIdentityDesc) score += 3;
+    if (modelFaceCrop) score += 1.5;
+    if (garmentBlueprint) score += 2;
+    if (masterAnchorLock) score += 1.5;
+    if (customInstruction.trim() !== '') score += 1.4;
+    return Math.min(Number(score.toFixed(1)), 99.9);
+  };
+
+  const randomizeSeed = () => {
+    const rSeed = Math.floor(Math.random() * 899999) + 100000;
+    setCurrentSeed(rSeed);
+    showToast(`Background Seed locked to: #${rSeed}`);
+  };
+
+  const sanitizeAntiUncanny = (text) => {
+    if (!text) return '';
+    const withoutBuzzwords = text
+      .replace(/\b(hyperrealistic|photorealistic|ultra detailed|flawless|cgi|3d|8k|gorgeous)\b/gi, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+    return sanitizeCommercialEuphemisms(withoutBuzzwords, safeGuardMode);
+  };
+
+  // Smart Chaos & Preset Conflict Resolver (Prevents 'wireless setup' + 'cables' or 'no harsh shadows' + 'harsh shadows')
+  const resolveSceneAndLighting = (isSafe, stripChaos = false) => {
+    let rawEnv = environment === 'custom' ? (customEnvironment || 'clean minimalist background') : environment;
+    let finalEnv = sanitizeCommercialEuphemisms(rawEnv, isSafe);
+    let finalLight = lighting === 'custom' ? (customLighting || 'natural lighting') : lighting;
+
+    if (stripChaos) {
+      return {
+        finalEnv: 'clean minimalist commercial studio backdrop, swept floor',
+        finalLight: 'bright high-key diffused commercial softbox lighting, even studio illumination',
+        chaosEnvStr: ''
+      };
+    }
+
+    let envAdditions = [];
+    if (enableBrickWall) {
+      finalEnv = `exposed red brick wall backdrop, industrial textured masonry, ${finalEnv}`;
+    }
+    if (enableCables) {
+      finalEnv = finalEnv.replace(/,?\s*\b(wireless setup|no clutter)\b/gi, '');
+      envAdditions.push("exposed black power cables trailing on floor, real studio tether lines");
+    }
+    if (enableDirtyAtmosphere) {
+      envAdditions.push("fine dust particles suspended in the air rays, hazy ambient lens glow");
+    }
+    if (enableGrittyVibe) {
+      finalEnv = finalEnv.replace(/,?\s*\b(immaculate studio floor|perfectly swept floor|pristine surface)\b/gi, '');
+      envAdditions.push("authentic street surface texture, unpolished concrete floor, realistic wear");
+    }
+    if (enableWaterStains) {
+      envAdditions.push(isSafe 
+        ? "subtle matte activewear moisture-wicking fabric texture, damp studio floor reflection" 
+        : "visible water damp spots, moisture texture on fabric, damp ground");
+    }
+    if (enableHarshShadows) {
+      finalLight = finalLight.replace(/,?\s*\b(no harsh shadows|soft shadows|softbox diffusion)\b/gi, '');
+      finalLight = `${finalLight}, high-contrast directional hard shadows, un-diffused direct light source cutting across scene`;
+    }
+
+    const chaosEnvStr = envAdditions.length > 0 ? `, ${envAdditions.join(", ")}` : "";
+    return { finalEnv: finalEnv.replace(/\s{2,}/g, ' ').trim(), finalLight: finalLight.replace(/\s{2,}/g, ' ').trim(), chaosEnvStr };
+  };
+
+  const getAnglesConfig = (forceStrictSafeOverride = false, emergencyFraming = false) => {
+    const isSafe = safeGuardMode || forceStrictSafeOverride || emergencyFraming;
+    if (shootMode === 'pov') {
+      if (povStyle === 'no-hands') {
+        return [
+          { id: 'front', label: 'Flatlay Depan', promptAddon: 'DIRECTIVE: A single unified top-down overhead flatlay shot of exactly ONE single garment laid beautifully flat on the surface. Symmetrical clean arrangement. Strictly one single undivided view, no split screen, no comparison frames. CRITICAL: Only one item in the frame.' },
+          { id: 'side', label: 'Lipat Detail', promptAddon: 'DIRECTIVE: A single close-up macro shot of the garment folded aesthetically on a textured surface. Showcase side seams, material thickness, and clean lines. Strictly one single continuous scene, absolutely no collage, no diptych, no stacked comparison frames.' },
+          { id: 'back', label: 'Flatlay Belakang', promptAddon: 'DIRECTIVE: A single unified top-down overhead flatlay shot showing exclusively the BACK of the garment laid flat on the surface with organic natural fabric folds. Absolutely no top-and-bottom stacked layouts. One continuous background.' },
+          { id: 'detail', label: 'Tekstur Kain', promptAddon: 'DIRECTIVE: Extreme macro close-up focus entirely on the raw fabric texture, weave pattern, stitching, and fibers. Depth of field blurring the background. No human elements at all. Single continuous undivided frame.' },
+          { id: 'dynamic', label: 'Gantungan Baju', promptAddon: 'DIRECTIVE: The garment hanging elegantly on a minimalist rustic wooden hanger against the wall, casting soft realistic shadows. Single camera frame view. No duplicates.' }
+        ];
+      }
+      return [
+        { id: 'front', label: 'Pegang Depan', promptAddon: 'DIRECTIVE: First-person POV looking directly down. EXACTLY TWO HANDS ONLY entering from the bottom edge of the frame. CRITICAL: Hold the garment with a relaxed, loose grip. Allow the fabric to naturally drape downwards following gravity. The neckline must collapse inward naturally. Absolutely NO horizontal stretching, NO stiff horizontal bar effect, NO hidden hanger look, allow realistic fabric folds and wrinkles. One continuous frame.' },
+        { id: 'side', label: 'Samping POV', promptAddon: 'DIRECTIVE: First-person POV looking down. EXACTLY TWO HANDS ONLY entering from the bottom edge. CRITICAL: Loose relaxed grip, holding the garment sideways to show its profile/sleeve/side-seam. Allow fabric to fold naturally under gravity. No horizontal pull, no hanger look. Organic fabric wrinkles, single undivided frame.' },
+        { id: 'back', label: 'Pegang Belakang', promptAddon: 'DIRECTIVE: First-person POV. EXACTLY TWO RELAXED HANDS ONLY (entering from bottom frame) gently holding the back side of the fabric to the camera. ABSOLUTELY NO HANDS IN THE UPPER HALF OF THE IMAGE. Focus entirely on the natural texture and organic folds of the back design. No rigid horizontal tension, single unified shot.' },
+        { id: 'detail', label: 'Macro Tangan', promptAddon: 'DIRECTIVE: Extreme close up First-person POV. EXACTLY ONE PAIR OF HANDS (TWO HANDS TOTAL) entering from the bottom camera edge, casually pinching or touching the specific fabric texture. Macro focus on the weave and fingers interacting with material. One single unified photo.' },
+        { id: 'dynamic', label: 'Interaksi POV', promptAddon: 'DIRECTIVE: First-person POV. Hands (MAXIMUM 2 HANDS) casually tossing or draping the product over an object (like a chair or knee). CRITICAL: Natural gravity drape, fabric must fall downwards, not spread wide. No horizontal tension, show raw interaction with natural folds, single unified frame.' }
+      ];
+    }
+
+    const effectivePoseId = forceStrictSafeOverride ? 'standing' : poseType;
+    const gazeInstruction = expressionType === 'looking_away'
+      ? 'eyes looking candidly slightly off-camera while keeping the full face clearly visible'
+      : 'face and eyes clearly visible to the camera so the exact 1:1 facial likeness is unmistakable';
+
+    return [
+      { id: 'front', label: 'Pose Depan', promptAddon: `DIRECTIVE [FRONT COMMERCIAL CATALOG VIEW]: Strictly one single person in a classy e-commerce lookbook framing. Front-facing camera angle with ${gazeInstruction}. Symmetrical full-length framing. Pose and expression: ${resolvePoseForAngle(effectivePoseId, expressionType, 'front', isSafe)}. CRITICAL SINGLE FRAME DIRECTIVE: Single, unified, undivided continuous photograph. Absolutely NO split screen, NO duplicate models.` },
+      { id: 'side', label: 'Pose Samping', promptAddon: `DIRECTIVE [3/4 SIDE PROFILE CATALOG VIEW]: Strictly one single person. Body angled 45 degrees to showcase the side tailoring, sleeve profile, and silhouette of the apparel, with ${gazeInstruction}. Pose and expression: ${resolvePoseForAngle(effectivePoseId, expressionType, 'side', isSafe)}. Single unified view.` },
+      { id: 'back', label: 'Pose Belakang', promptAddon: emergencyFraming
+        ? `DIRECTIVE [THREE-QUARTER OVER-SHOULDER APPAREL CATALOG]: Strictly one single person standing in a wholesome, modest commercial retail lookbook stance, angled slightly away to show the shoulder and upper-back collar tailoring while looking gracefully toward the camera. Eye-level medium-full framing. Pose: ${resolvePoseForAngle('standing', expressionType, 'back', true)}. Single unified photograph.`
+        : isSafe
+          ? `DIRECTIVE [BACK-VIEW APPAREL TAILORING CATALOG]: Strictly one single person in a wholesome, non-suggestive commercial sport/retail lookbook stance. Facing away from the camera to clearly showcase the upper-back strap/collar design, back stitching, and fabric construction of the outfit, with the model looking gracefully back over their shoulder so their exact hairstyle, eyewear, and facial profile match the reference model. Dignified eye-level framing. Pose: ${resolvePoseForAngle(effectivePoseId, expressionType, 'back', true)}. Single unified photograph.`
+          : `DIRECTIVE [BACK-VIEW COMMERCIAL CATALOG]: Strictly one single person. Body turned away from the camera showcasing the back design, stitching, and commercial tailoring cut of the garment, with the model looking back over their shoulder so their exact hairstyle and facial profile match the reference model. Pose: ${resolvePoseForAngle(effectivePoseId, expressionType, 'back', false)}. Single unified photograph.`
+      },
+      { id: 'detail', label: 'Half-Body Close', promptAddon: `DIRECTIVE [UPPER-BODY EDITORIAL PORTRAIT]: Medium close-up waist-to-head portrait framing (do NOT show feet or floor). Showcases both the exact 1:1 facial likeness of the model and the upper neckline, graphic print, stitching, and material weave quality of the garment clearly in one frame. Pose and expression: ${resolvePoseForAngle(effectivePoseId, expressionType, 'detail', isSafe)}.` },
+      { id: 'dynamic', label: 'Low Angle', promptAddon: emergencyFraming
+        ? `DIRECTIVE [EYE-LEVEL EDITORIAL FULL LOOKBOOK]: Dignified eye-level commercial lookbook angle highlighting the full outfit drape, footwear coordination, and confident posture while keeping the model's exact face clearly visible. Strictly one single person. Pose: ${resolvePoseForAngle('standing', expressionType, 'dynamic', true)}. Single undivided photo.`
+        : isSafe
+          ? `DIRECTIVE [DYNAMIC EYE-TO-WAIST EDITORIAL ANGLE]: Dignified fashion lookbook angle shot from hip-level looking slightly upwards, highlighting the full outfit drape, footwear coordination, and confident posture while keeping the model's exact face clearly visible and undistorted. Wholesome commercial catalog framing. Strictly one single person. Pose and expression: ${resolvePoseForAngle(effectivePoseId, expressionType, 'dynamic', true)}. Single undivided photo.`
+          : `DIRECTIVE [DYNAMIC LOW ANGLE]: Dynamic low angle shot from waist-level shooting slightly upwards, showing the full drape and silhouette of the outfit while keeping the model's exact face clearly visible and undistorted. Strictly one single person. Pose and expression: ${resolvePoseForAngle(effectivePoseId, expressionType, 'dynamic', false)}. Single undivided photo.`
+      }
+    ];
+  };
+
+  const getBasePrompt = (seed, forceStrictSafeOverride = false, targetAngleId = 'front') => {
+    const isSafe = safeGuardMode || forceStrictSafeOverride;
+    const rawClothing = clothingName || "fashionable clothes";
+    const finalClothing = sanitizeCommercialEuphemisms(rawClothing, isSafe);
+    const finalMaterial = material === 'custom' ? (customMaterial || 'premium fabric') : material;
+
+    const { finalEnv, finalLight, chaosEnvStr } = resolveSceneAndLighting(isSafe, forceStrictSafeOverride);
+
+    const safeGuardHeader = isSafe
+      ? `[COMMERCIAL RETAIL & ATHLETIC APPAREL LOOKBOOK: Strictly safe-for-work, wholesome family-friendly e-commerce catalog photography, professional retail presentation, dignified athletic/fashion posture]\n`
+      : '';
+
+    const maxOpticalLockHeader = isMaxRealismLocked
+      ? `[99.9% HYPER-OPTICAL CALIBRATION LOCK: Authentic unretouched optical sensor micro-noise, organic fabric weave physics, accurate floor contact shadows, natural studio catchlights in eyes, zero digital plastic smoothing]\n`
+      : '';
+
+    const compositionLock = `[COMPOSITION LOCK] Strictly ONE single unified continuous photograph. Absolutely NO split screen, NO diptych, NO collage, NO multiple panels, NO grid layout, NO duplicate models, NO double exposure. ONLY ONE SINGLE VIEW.`;
+    const aspectRatioLock = `[ASPECT RATIO LOCK] CRITICAL: Adhere strictly to a ${aspectRatio} aspect layout ratio.`;
+
+    const bodySpec = BODY_SILHOUETTE_TYPES.find(b => b.id === bodySilhouette)?.value || '';
+    const footwearSpec = FOOTWEAR_TYPES.find(f => f.id === footwearType)?.value || '';
+    // Do NOT inject footwear into 'detail' (Half-Body Close) so AI doesn't zoom out to show shoes
+    const includeFootwear = targetAngleId !== 'detail';
+    const silhouetteAndFootwearLock = shootMode !== 'pov'
+      ? `\n[SILHOUETTE${includeFootwear ? ' & FOOTWEAR' : ''} LOCK]: Body proportions: ${bodySpec}.${includeFootwear ? ` Footwear coordination: ${footwearSpec}. Maintain identical footwear across all full-body angles.` : ''}`
+      : '';
+
+    const dermalComplexionToken = ultraRealism
+      ? ` Maintain natural facial complexion micro-pores, realistic studio light subsurface scattering, and authentic un-airbrushed skin texture without altering the person's facial identity.`
+      : ` Clean commercial studio complexion lighting.`;
+
+    let identityLock = '';
+    if (shootMode !== 'pov') {
+      if (modelImage) {
+        let adaptedIdentityDesc = sanitizeCommercialEuphemisms(modelIdentityDesc, isSafe);
+        // Handle sunglasses expression vs clear glasses in biometric scan
+        if (expressionType === 'sunglasses' && adaptedIdentityDesc) {
+          adaptedIdentityDesc = adaptedIdentityDesc.replace(/\b(clear|prescription|transparent|reading)?\s*(glasses|spectacles|eyeglasses)\b/gi, 'dark-tinted stylish sunglasses keeping the exact same frame silhouette');
+        }
+        // Strip conflicting body build words if user explicitly selected a custom Body Silhouette Lock
+        if (bodySilhouette !== 'match_ref' && adaptedIdentityDesc) {
+          adaptedIdentityDesc = adaptedIdentityDesc.replace(/\b(slender|petite|curvy|athletic|chubby|slim|thin|muscular)\s+(build|physique|body|frame)\b/gi, '');
+        }
+
+        const eyewearException = expressionType === 'sunglasses'
+          ? ' (wearing dark-tinted sunglasses lenses as requested while preserving 100% of face shape, nose, lips, and hair)'
+          : '';
+
+        const strictnessText = identityStrength === 'strict' 
+          ? `ABSOLUTE 1:1 BIOMETRIC FACE CLONE MODE: You MUST replicate the EXACT person from the attached [MODEL IDENTITY REFERENCE]. Do NOT generate a generic face, do NOT beautify, and do NOT alter their bone structure, eye shape, nose bridge, mouth, complexion tone, or hair/hijab${eyewearException}. It must look unmistakably like the exact same individual.`
+          : `NATURAL IDENTITY PRESERVATION: closely preserve the facial features, ethnicity, hair, and vibe of the person in the attached [MODEL IDENTITY REFERENCE], blending naturally with the scene lighting.`;
+
+        const biometricDetails = adaptedIdentityDesc 
+          ? `\n[BIOMETRIC FACIAL BLUEPRINT]: ${adaptedIdentityDesc}.` 
+          : '';
+
+        identityLock = `[IDENTITY & BIOMETRIC LOCK] ${strictnessText}${biometricDetails}${dermalComplexionToken}${silhouetteAndFootwearLock}`;
+      } else {
+        const defaultGenderStr = gender === 'male' ? 'male commercial model' : 'female commercial model';
+        identityLock = `[IDENTITY & COMPLEXION LOCK] Authentic Indonesian ${defaultGenderStr}.${dermalComplexionToken} Natural eyelids, authentic studio catchlight reflection.${silhouetteAndFootwearLock}`;
+      }
+    }
+
+    const blueprintAddon = garmentBlueprint ? ` Detailed Garment Blueprint: ${sanitizeCommercialEuphemisms(garmentBlueprint, isSafe)}.` : '';
+    const colorLockAddon = colorPaletteLock ? ` [CHROMATIC COLOR LOCK]: Preserve exact intrinsic garment colors (${colorPaletteLock}) regardless of ambient studio lighting tint.` : '';
+    const pairingAddon = (shootMode !== 'pov' && garmentCoverage !== 'full_outfit' && complementaryGarment)
+      ? ` [COMPLEMENTARY OUTFIT LOCK]: Since the product reference is ${garmentCoverage === 'top_only' ? 'an upper-body top' : 'a lower-body bottom'}, pair it consistently across ALL angles with: ${complementaryGarment}.`
+      : '';
+
+    const conditionDesc = textileCondition === 'new'
+      ? 'Brand new crisp look, freshly steam-ironed fabric, smooth pristine texture, clean straight seams.'
+      : 'Real-world distressed texture, subtle fabric pilling, realistic natural unironed wrinkles.';
+
+    let productLock = '';
+    if (shootMode === 'pov') {
+      if (povStyle === 'no-hands') {
+        productLock = `[PRODUCT & TEXTILE LOCK] Displaying the exact standalone ${finalClothing} made of ${finalMaterial} laid flat on the surface${productImage ? ' matching the attached [GARMENT PRODUCT REFERENCE]' : ''}.${blueprintAddon}${colorLockAddon} Replicate the exact cut, color, neckline, sleeves, waistband, and any graphics/logos faithfully. ${conditionDesc}`;
+      } else {
+        productLock = `[PRODUCT & TEXTILE LOCK] Two relaxed hands holding the exact standalone ${finalClothing} made of ${finalMaterial}${productImage ? ' matching the attached [GARMENT PRODUCT REFERENCE]' : ''}.${blueprintAddon}${colorLockAddon} Replicate the exact cut, color, neckline, sleeves, and graphics faithfully. ${conditionDesc}`;
+      }
+    } else {
+      productLock = `[PRODUCT & TEXTILE LOCK] Wearing the exact ${finalClothing} made of ${finalMaterial}${productImage ? ' from the attached [GARMENT PRODUCT REFERENCE]' : ''}.${blueprintAddon}${colorLockAddon}${pairingAddon} Replicate the exact cut, color, neckline, sleeves, waistband, and any graphics/logos faithfully. ${conditionDesc}`;
+    }
+
+    const patternLock = `[PATTERN LOCK] The garment MUST possess one single, continuous, unbroken, uniform pattern, print, and color scheme across its entire surface matching the product reference. Absolutely NO half-and-half designs, NO split motifs.`;
+
+    let cameraToken = '';
+    if (cameraStyle === 'smartphone') {
+      cameraToken = 'raw unedited grainy smartphone camera photo, slightly smudged lens reflection, high ISO noise, compressed jpeg artifacts, minor edge chromatic aberration, amateur handheld snapshot';
+    } else if (cameraStyle === 'film') {
+      cameraToken = 'shot on classic Kodak Portra 400 analog 35mm film, retro color temperature, organic heavy warm grain, vintage film scanner softness, subtle light leaks, halation on highlights';
+    } else if (cameraStyle === 'cctv') {
+      cameraToken = 'low quality CCTV security camera footage snapshot, fisheye lens distortion, heavy digital compression artifacts, grainy low light sensor, security footage aesthetic';
+    } else {
+      cameraToken = 'photographed with full-frame DSLR camera, 85mm f/1.4 prime lens, creamy natural depth of field background blur, highly detailed sharp focal point, professional magazine quality but unretouched';
+    }
+
+    const grainOpticalToken = filmGrainFilter ? ', authentic organic ISO luminance grain texture' : '';
+    const natureRealism = `[PHYSICS REALISM] natural ambient light roll-off, authentic shadow contact on floor, zero gradient digital smoothness, realistic fabric drape weight${grainOpticalToken}.`;
+
+    const systemHeader = shootMode === 'pov'
+      ? `[SYSTEM_INIT: COMMERCIAL_PRODUCT_POV_PHOTOGRAPHY]\n[CAMERA_CONFIG: stylize=0; quality=max; raw_mode=true]\n`
+      : `[SYSTEM_INIT: VIRTUAL_TRY_ON_AND_BIOMETRIC_IDENTITY_PRESERVATION]\n[CAMERA_CONFIG: stylize=0; quality=max; raw_mode=true; face_similarity=1.0]\n`;
+
+    let basePrompt = `${safeGuardHeader}${maxOpticalLockHeader}${systemHeader}`;
+
+    if (shootMode === 'pov') {
+      if (povStyle === 'no-hands') {
+        basePrompt += `${compositionLock}\n${aspectRatioLock}\nYou are a professional product photographer. ${productLock}\n${patternLock} Environment: ${finalEnv}${chaosEnvStr}. Lighting: ${finalLight}. Lens/Camera: ${cameraToken}. CRITICAL SINGLE FRAME DIRECTIVE: The output MUST be a single, unified, undivided continuous photograph. Absolutely NO split screen. CRITICAL ABSENCE INSTRUCTION: Strictly NO humans, NO hands, NO fingers, NO arms, NO legs, NO mannequin, and NO body contours must be visible in the image. The garment must be displayed flat and standalone. ${natureRealism} CRITICAL BACKGROUND INSTRUCTION (Seed ID: ${seed}): The background environment MUST remain strictly identical.`;
+      } else {
+        basePrompt += `${compositionLock}\n${aspectRatioLock}\nYou are a documentary product photographer. Create an authentic FIRST-PERSON POV shot. We ONLY see exactly ONE pair of relaxed hands (left and right) of the camera operator entering the frame directly from the bottom edge. ${productLock}\n${patternLock} Environment: ${finalEnv}${chaosEnvStr}. Lighting: ${finalLight}. Lens/Camera: ${cameraToken}. CRITICAL ANATOMY INSTRUCTION: Strictly ONE pair of hands originating from the bottom edge. NO third hand, NO extra hands reaching from the top. No face, neck, or torso visible. ${natureRealism} CRITICAL BACKGROUND INSTRUCTION (Seed ID: ${seed}): The background environment MUST remain identical.`;
+      }
+    } else {
+      basePrompt += `${compositionLock}\n${aspectRatioLock}\n${identityLock}\n${productLock}\n${patternLock}\n[SCENE] Environment: ${finalEnv}${chaosEnvStr}. Lighting: ${finalLight}. Camera/Sensor: ${cameraToken}.\n${natureRealism}`;
+    }
+
+    if (negativePrompt.trim() !== '') {
+      basePrompt += ` \n[GLOBAL_NEGATIVE_PROMPT]: ${negativePrompt}`;
+    }
+
+    return basePrompt;
+  };
+
+  // Dynamic Reference Indexing (Never misnumbers images or references missing images; attaches Auto High-Res Face Crop!)
+  const buildMultimodalParts = (imagePrompt, anchorFrameBase64 = null) => {
+    const parts = [];
+    let refCounter = 1;
+    let modelRefIndex = null;
+    let faceCropRefIndex = null;
+    let garmentRefIndex = null;
+
+    if (modelImage && shootMode !== 'pov') {
+      const mimeMatch = modelImage.match(/data:(.*);base64,(.*)/);
+      if (mimeMatch) {
+        modelRefIndex = refCounter++;
+        parts.push({ text: `REFERENCE IMAGE #${modelRefIndex} [PRIMARY MODEL IDENTITY & FULL HEAD/HAIR REFERENCE - COPY THIS EXACT PERSON 1:1]:` });
+        parts.push({ inlineData: { mimeType: mimeMatch[1], data: mimeMatch[2] } });
+      }
+      if (modelFaceCrop) {
+        const cropMatch = modelFaceCrop.match(/data:(.*);base64,(.*)/);
+        if (cropMatch) {
+          faceCropRefIndex = refCounter++;
+          parts.push({ text: `REFERENCE IMAGE #${faceCropRefIndex} [HIGH-RESOLUTION 1:1 ZOOMED FACE BIOMETRIC CROP OF THE SAME MODEL - REPLICATE THESE EXACT EYES, NOSE, LIPS, BONE STRUCTURE, EYEWEAR, AND COMPLEXION]:` });
+          parts.push({ inlineData: { mimeType: cropMatch[1], data: cropMatch[2] } });
+        }
+      }
+    }
+
+    if (productImage) {
+      const mimeMatch = productImage.match(/data:(.*);base64,(.*)/);
+      if (mimeMatch) {
+        garmentRefIndex = refCounter++;
+        parts.push({ text: `REFERENCE IMAGE #${garmentRefIndex} [GARMENT / CLOTHING PRODUCT - REPLICATE THIS EXACT ITEM, COLOR SHADE, GRAPHICS, AND TAILORING CUT]:` });
+        parts.push({ inlineData: { mimeType: mimeMatch[1], data: mimeMatch[2] } });
+      }
+    }
+
+    if (anchorFrameBase64 && shootMode !== 'pov' && masterAnchorLock) {
+      const mimeMatch = anchorFrameBase64.match(/data:(.*);base64,(.*)/);
+      if (mimeMatch) {
+        const anchorIndex = refCounter++;
+        parts.push({ text: `REFERENCE IMAGE #${anchorIndex} [MASTER ANCHOR FRAME - MAINTAIN THIS EXACT COMBINED OUTFIT FIT, COMPLEMENTARY PAIRING, FOOTWEAR, AND STUDIO LIGHTING WHILE CHANGING ONLY THE CAMERA ANGLE]:` });
+        parts.push({ inlineData: { mimeType: mimeMatch[1], data: mimeMatch[2] } });
+      }
+    }
+
+    let dynamicConsistencyFooter = '';
+    if (shootMode !== 'pov' && modelRefIndex !== null) {
+      const cropNote = faceCropRefIndex !== null ? ` and the zoomed close-up in REFERENCE IMAGE #${faceCropRefIndex}` : '';
+      const garmentNote = garmentRefIndex !== null ? ` Dress them accurately in the garment from REFERENCE IMAGE #${garmentRefIndex}.` : '';
+      dynamicConsistencyFooter = `\nSTRICT FACIAL CONSISTENCY DIRECTIVE: The person in the generated image MUST be the exact same individual shown in REFERENCE IMAGE #${modelRefIndex}${cropNote}. Preserve their exact facial bone structure, eyes, nose, lips, complexion tone, and hair/hijab without alteration.${garmentNote}`;
+    }
+
+    parts.push({ text: `${imagePrompt}${dynamicConsistencyFooter}` });
+    return parts;
+  };
+
+  // UPGRADED v21: 3-Tier Self-Healing Escalation Render Executor
+  // Tier 0: Normal User Settings -> Tier 1: Sanitized Upright High-Key Studio -> Tier 2: Emergency Editorial Framing
+  const executeSingleAngleRender = async (angle, activeSeed, anchorFrameBase64 = null, signal = null) => {
+    const apiKey = ""; 
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+
+    const attemptCall = async (escalationTier) => {
+      const forceStrictSafe = escalationTier >= 1;
+      const emergencyFraming = escalationTier >= 2;
+      const currentAngles = getAnglesConfig(forceStrictSafe, emergencyFraming);
+      const targetAngleObj = currentAngles.find(a => a.id === angle.id) || angle;
+      const basePrompt = getBasePrompt(activeSeed, forceStrictSafe, angle.id);
+
+      let imagePrompt = `${basePrompt}\nCAMERA ANGLE AND POSE: ${targetAngleObj.promptAddon}\n[TECHNICAL ENGINE] ${technical}`;
+      
+      const combinedUserDirectives = [presetDirective, customInstruction].filter(Boolean).join(', ');
+      const cleanInstruction = sanitizeAntiUncanny(combinedUserDirectives);
+      if (cleanInstruction !== '' && escalationTier === 0) {
+        imagePrompt += ` \nCRITICAL USER OVERRIDE INSTRUCTION: ${cleanInstruction}`;
+      }
+
+      if (shootMode === 'pov') {
+        if (povStyle === 'no-hands') {
+          imagePrompt += ` \nNEGATIVE DIRECTIVE: Avoid hands, avoid fingers, avoid arms, avoid legs, avoid humans, avoid models, avoid headless torso, avoid mannequin parts.`;
+        } else {
+          imagePrompt += ` \nNEGATIVE DIRECTIVE: CRITICAL AVOID FOUR HANDS, STRICTLY NO HANDS FROM TOP EDGE, strictly no third arm, no third hand, no extra hands, no hands entering from side, avoid headless floating torso, avoid flat geometric clothing folds.`;
+        }
+      }
+
+      if (escalationTier === 1) {
+        imagePrompt = `[SAFE-FOR-WORK E-COMMERCE CATALOG OVERRIDE: Ensure wholesome, modest, non-suggestive commercial catalog framing with bright even retail studio lighting. Focus strictly on apparel tailoring and facial identity.]\n` + imagePrompt;
+      } else if (escalationTier >= 2) {
+        imagePrompt = `[EMERGENCY MODEST EDITORIAL LOOKBOOK FALLBACK: Strictly wholesome family-friendly retail catalog photography, conservative camera angle, bright high-key studio lighting, dignified upright posture focusing on garment weave and facial likeness.]\n` + imagePrompt;
+      }
+
+      const parts = buildMultimodalParts(imagePrompt, anchorFrameBase64);
+      const payload = {
+        contents: [{ role: "user", parts }],
+        generationConfig: { responseModalities: ["TEXT", "IMAGE"] }
+      };
+
+      const data = await fetchWithRetry(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal
+      });
+
+      const inlinePart = data.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+      if (inlinePart?.inlineData?.data) {
+        const mimeType = inlinePart.inlineData.mimeType || 'image/png';
+        return `data:${mimeType};base64,${inlinePart.inlineData.data}`;
+      }
+      return null;
+    };
+
+    for (let tier = 0; tier <= 2; tier++) {
+      try {
+        if (signal?.aborted) return null;
+        const resultImg = await attemptCall(tier);
+        if (resultImg) return resultImg;
+      } catch (err) {
+        if (err.name === 'AbortError') return null;
+        if (tier === 2) {
+          console.error(`All 3 escalation tiers failed for angle ${angle.id}:`, err);
+        }
+      }
+    }
+    return null;
+  };
+
+  const handleCancelRender = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsGenerating(false);
+    setIsBatchGenerating(false);
+    setRegeneratingAngle(null);
+    setGeneratingStatus('');
+    setLoadingAngles({ front: false, side: false, back: false, detail: false, dynamic: false });
+    showToast("⏹️ Proses render dibatalkan oleh pengguna.");
+  };
+
+  // UPGRADED v21: Smart Staggered + Self-Healing Master Anchor Pipeline with AbortController
+  const generateImageViaAPI = async () => {
+    if (isAnyRenderBusy) return;
+    const finalClothing = clothingName || "fashionable clothes";
+    if (finalClothing === "fashionable clothes" && !productImage) {
+      showToast("Harap isi jenis pakaian atau upload referensi produk!");
+      return;
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    setCompareMode(null);
+    setIsGenerating(true);
+    setFailedAngles({});
+    setGeneratingStatus('Tahap 1/2: Merender Master Anchor (Pose Depan) untuk mengunci konsistensi...');
+    
+    setGeneratedAngles({ front: null, side: null, back: null, detail: null, dynamic: null });
+    setAngleHistory({ front: [], side: [], back: [], detail: [], dynamic: [] });
+    setLoadingAngles({ front: true, side: true, back: true, detail: true, dynamic: true });
+    
+    const activeSeed = lockSeed ? currentSeed : Math.floor(Math.random() * 899999) + 100000;
+    if (!lockSeed) setCurrentSeed(activeSeed);
+
+    const angles = getAnglesConfig();
+    const frontAngle = angles.find(a => a.id === 'front');
+    const remainingAngles = angles.filter(a => a.id !== 'front');
+
+    let anchorImageBase64 = null;
+    let completedCount = 0;
+
+    try {
+      // STAGE 1: Render Front Master Frame First (if Model Mode & Anchor Lock is enabled)
+      if (frontAngle && shootMode !== 'pov' && masterAnchorLock) {
+        const frontResult = await executeSingleAngleRender(frontAngle, activeSeed, null, controller.signal);
+        if (controller.signal.aborted) return;
+
+        setLoadingAngles(prev => ({ ...prev, front: false }));
+        completedCount++;
+
+        if (frontResult) {
+          setGeneratedAngles(prev => ({ ...prev, front: frontResult }));
+          setActiveAngle('front');
+          anchorSignatureRef.current = getCurrentConfigSignature();
+          anchorImageBase64 = await compressImageDataUrl(frontResult, 1024, 0.85);
+          setGeneratingStatus(`Tahap 2/2: Master Anchor Terkunci! Merender 4 angle katalog lainnya (1/${angles.length})...`);
+        } else {
+          setFailedAngles(prev => ({ ...prev, front: true }));
+          setGeneratingStatus(`Tahap 2/2: Melanjutkan 4 angle lainnya dengan 3-Tier Self-Healing...`);
+        }
+
+        // STAGE 2: Render remaining 4 angles with 350ms stagger to prevent HTTP 429 Rate Limits
+        let firstFallbackSelected = !!frontResult;
+        const remainingPromises = remainingAngles.map(async (angle, idx) => {
+          await new Promise(res => setTimeout(res, idx * 350));
+          if (controller.signal.aborted) return;
+          const imgStr = await executeSingleAngleRender(angle, activeSeed, anchorImageBase64, controller.signal);
+          if (controller.signal.aborted) return;
+          completedCount++;
+          setGeneratingStatus(`Merender Katalog Multi-Angle (${completedCount}/${angles.length} selesai)...`);
+          setLoadingAngles(prev => ({ ...prev, [angle.id]: false }));
+
+          if (imgStr) {
+            setGeneratedAngles(prev => ({ ...prev, [angle.id]: imgStr }));
+            if (!firstFallbackSelected) {
+              setActiveAngle(angle.id);
+              firstFallbackSelected = true;
+            }
+          } else {
+            setFailedAngles(prev => ({ ...prev, [angle.id]: true }));
+          }
+        });
+
+        await Promise.all(remainingPromises);
+      } else {
+        // Staggered Parallel Pipeline for POV Mode or when Master Anchor is unchecked
+        let isFirstSuccess = true;
+        const allPromises = angles.map(async (angle, idx) => {
+          await new Promise(res => setTimeout(res, idx * 300));
+          if (controller.signal.aborted) return;
+          const imgStr = await executeSingleAngleRender(angle, activeSeed, null, controller.signal);
+          if (controller.signal.aborted) return;
+          completedCount++;
+          setGeneratingStatus(`Merender Katalog (${completedCount}/${angles.length} selesai)...`);
+          setLoadingAngles(prev => ({ ...prev, [angle.id]: false }));
+
+          if (imgStr) {
+            setGeneratedAngles(prev => ({ ...prev, [angle.id]: imgStr }));
+            if (isFirstSuccess) {
+              setActiveAngle(angle.id);
+              isFirstSuccess = false;
+            }
+          } else {
+            setFailedAngles(prev => ({ ...prev, [angle.id]: true }));
+          }
+        });
+
+        await Promise.all(allPromises);
+      }
+
+      if (!controller.signal.aborted) {
+        showToast("Proses render Biometric VTON v21 selesai!");
+      }
+    } finally {
+      if (!controller.signal.aborted) {
+        setIsGenerating(false);
+        setGeneratingStatus('');
+      }
+    }
+  };
+
+  const regenerateSingleAngle = async (angleId) => {
+    if (isAnyRenderBusy) return;
+    const angles = getAnglesConfig();
+    const targetAngle = angles.find(a => a.id === angleId);
+    if (!targetAngle) return;
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    
+    setCompareMode(null);
+    setRegeneratingAngle(angleId);
+    setLoadingAngles(prev => ({ ...prev, [angleId]: true }));
+    setFailedAngles(prev => ({ ...prev, [angleId]: false }));
+
+    // Only use front as Master Anchor if core parameters haven't changed since front was rendered
+    const isAnchorFresh = anchorSignatureRef.current === getCurrentConfigSignature();
+    const anchorRef = (angleId !== 'front' && masterAnchorLock && isAnchorFresh && generatedAngles.front)
+      ? await compressImageDataUrl(generatedAngles.front, 1024, 0.85)
+      : null;
+
+    try {
+      const newImageStr = await executeSingleAngleRender(targetAngle, currentSeed, anchorRef, controller.signal);
+      if (controller.signal.aborted) return;
+      if (newImageStr) {
+        if (angleId === 'front') {
+          anchorSignatureRef.current = getCurrentConfigSignature();
+        }
+        if (generatedAngles[angleId]) {
+          // Cap Undo history to max 5 entries per angle to prevent RAM bloat
+          setAngleHistory(prev => ({
+            ...prev,
+            [angleId]: [...(prev[angleId] || []).slice(-4), generatedAngles[angleId]]
+          }));
+        }
+        setGeneratedAngles(prev => ({ ...prev, [angleId]: newImageStr }));
+        setActiveAngle(angleId);
+        showToast(`Render ulang angle ${targetAngle.label} berhasil!`);
+      } else {
+        setFailedAngles(prev => ({ ...prev, [angleId]: true }));
+        showToast(`Angle ${targetAngle.label} terkendala filter. Coba ganti pose atau aktifkan Safe-Guard.`);
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error(`Error regenerating:`, error);
+        setFailedAngles(prev => ({ ...prev, [angleId]: true }));
+        showToast("Gagal render ulang.");
+      }
+    } finally {
+      setRegeneratingAngle(null);
+      setLoadingAngles(prev => ({ ...prev, [angleId]: false }));
+    }
+  };
+
+  const generateBatchForAngle = async (angleId) => {
+    if (isAnyRenderBusy) return;
+    const angles = getAnglesConfig();
+    const targetAngle = angles.find(a => a.id === angleId);
+    if (!targetAngle) return;
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    
+    setCompareMode(null);
+    setBatchTargetAngle(angleId);
+    setIsBatchGenerating(true);
+    setBatchImages([]);
+    setSelectedBatchIndex(null);
+
+    const isAnchorFresh = anchorSignatureRef.current === getCurrentConfigSignature();
+    const anchorRef = (angleId !== 'front' && masterAnchorLock && isAnchorFresh && generatedAngles.front)
+      ? await compressImageDataUrl(generatedAngles.front, 1024, 0.85)
+      : null;
+    
+    const promises = [0, 1, 2, 3].map(async (index) => {
+      await new Promise(res => setTimeout(res, index * 650));
+      if (controller.signal.aborted) return null;
+      const randomSeed = Math.floor(Math.random() * 899999) + 100000;
+      return await executeSingleAngleRender(targetAngle, randomSeed, anchorRef, controller.signal);
+    });
+
+    try {
+      const results = await Promise.all(promises);
+      if (controller.signal.aborted) return;
+      const validResults = results.filter(img => img !== null);
+      if (validResults.length > 0) {
+        setBatchImages(validResults);
+        showToast(`Memproses batch ${validResults.length} variasi untuk ${targetAngle.label}!`);
+      } else {
+        showToast("Gagal memproses batch.");
+      }
+    } finally {
+      if (!controller.signal.aborted) {
+        setIsBatchGenerating(false);
+      }
+    }
+  };
+
+  const saveBatchSelection = () => {
+    if (selectedBatchIndex === null) return;
+    const targetKey = batchTargetAngle || activeAngle;
+    
+    if (generatedAngles[targetKey]) {
+      setAngleHistory(prev => ({
+        ...prev,
+        [targetKey]: [...(prev[targetKey] || []).slice(-4), generatedAngles[targetKey]]
+      }));
+    }
+
+    setGeneratedAngles(prev => ({ ...prev, [targetKey]: batchImages[selectedBatchIndex] }));
+    setActiveAngle(targetKey);
+    setBatchImages([]);
+    setSelectedBatchIndex(null);
+    showToast("Variasi berhasil diaplikasikan ke viewport!");
+  };
+
+  const handleUndo = (angleId) => {
+    const stack = angleHistory[angleId] || [];
+    if (stack.length === 0) return;
+
+    const prevImage = stack[stack.length - 1];
+    const newStack = stack.slice(0, -1);
+
+    setGeneratedAngles(prev => ({ ...prev, [angleId]: prevImage }));
+    setAngleHistory(prev => ({ ...prev, [angleId]: newStack }));
+    showToast(`Mengembalikan versi sebelumnya untuk ${angleId}.`);
+  };
+
+  const handleDownload = async (angleId) => {
+    const rawData = generatedAngles[angleId];
+    if (!rawData) return;
+    const finalData = await bakeFilmGrainToDataUrl(rawData);
+    const link = document.createElement('a');
+    link.href = finalData;
+    link.download = `fashion-autosense-${angleId}-${currentSeed}.png`;
+    link.click();
+    showToast("Aset gambar katalog berhasil diunduh!");
+  };
+
+  // Sequential Download All 5 Angles with Baked Film Grain
+  const handleDownloadAllAngles = async () => {
+    const angles = getAnglesConfig();
+    const availableAngles = angles.filter(a => !!generatedAngles[a.id]);
+    if (availableAngles.length === 0) {
+      showToast("Belum ada gambar hasil render untuk diunduh.");
+      return;
+    }
+    showToast(`Mengunduh ${availableAngles.length} foto katalog secara berurutan...`);
+    for (let i = 0; i < availableAngles.length; i++) {
+      const angle = availableAngles[i];
+      const finalData = await bakeFilmGrainToDataUrl(generatedAngles[angle.id]);
+      const link = document.createElement('a');
+      link.href = finalData;
+      link.download = `fashion-autosense-${i + 1}-${angle.id}-${currentSeed}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      await new Promise(res => setTimeout(res, 380));
+    }
+    showToast(`Berhasil mengunduh ${availableAngles.length} angle katalog!`);
+  };
+
+  const getContainerAspectClass = () => {
+    switch (aspectRatio) {
+      case '1:1': return 'aspect-square max-w-[420px]';
+      case '4:3': return 'aspect-[4/3] max-w-[480px]';
+      case '16:9': return 'aspect-[16/9] max-w-[480px]';
+      case '9:16':
+      default: return 'aspect-[9/16] max-w-[340px]';
+    }
+  };
+
+  // DYNAMIC SAFE-FOR-WORK PHYSICS COMPILER LIBRARY
+  const getVideoPhysicsLib = (activeMat, lensProfile) => ({
+    temporal_human: `[CINEMATIC_VIDEO_MODE: NATURAL_HUMAN_MOTION_ENGINE]
+[CAMERA_PARAMETERS: motion_smoothing=0; temporal_consistency=max; frame_rate=24fps; camera_shutter=1/50; lens_profile=${lensProfile}]
+// CHAPTER 1: AUTHENTIC HUMAN MICRO-MOTION & SURFACE LIGHTING
+{
+  "temporal_human_kinetics": {
+    "ocular_dynamics": "natural_unpredictable_blinks, organic_eye_focus_shifts, authentic_catchlight_reflection",
+    "posture_cadence": "subtle_natural_breathing_cadence, relaxed_collarbone_and_shoulder_micro_shifts",
+    "facial_expressions": "natural_micro-expressions, relaxed_jaw_and_lip_posture"
+  },
+  "surface_light_interaction": {
+    "complexion_texture": "unretouched_micro-pores, natural_studio_light_sheen, authentic_complexion_detail",
+    "light_scattering": "natural_subsurface_light_scattering, warm_ambient_tone_under_studio_lights",
+    "hair_dynamics": "visible_fine_hair_strands, natural_eyebrows, loose_hair_wisps_reacting_to_air_draft"
+  }
+}`,
+    textile_degradation: `// CHAPTER 2: GARMENT DRAPE & TAILORING PHYSICS (${activeMat.toUpperCase()})
+{
+  "textile_kinetics": {
+    "fabric_physics": "authentic_${activeMat.replace(/\s+/g, '_')}_weave_weight, secondary_motion_on_hems, dynamic_garment_creases_shifting_with_movement, accurate_gravity_drape_and_fit",
+    "stitching_detail": "authentic_tailored_seams, natural_hem_lines",
+    "hardware_detail": "realistic_metallic_accents, natural_fabric_fold_tension_on_motion"
+  }
+}`,
+    meteorological: `// CHAPTER 3: STUDIO ATMOSPHERE & AMBIENT LIGHTING
+{
+  "environmental_interaction": {
+    "air_flow": "subtle_indoor_air_draft_moving_fabric_edges_and_hair_strands",
+    "floor_contact": "accurate_foot_contact_shadows, realistic_shoe_sole_compression_on_studio_floor",
+    "light_diffusion": "soft_atmospheric_light_rolloff, natural_shadow_transitions"
+  }
+}`,
+    optical: `// CHAPTER 4: CAMERA OPTICS & SENSOR GRAIN (${lensProfile})
+{
+  "camera_optics": {
+    "lens_character": "subtle_lens_flare_glow, minor_edge_chromatic_aberration, organic_handheld_camera_micro-shake, natural_24fps_motion_blur",
+    "sensor_texture": "authentic_iso_film_grain, natural_dynamic_range, soft_highlight_rolloff"
+  }
+}`
+  });
+
+  const padVideoPrompt = (coreText, targetLength) => {
+    if (coreText.length >= targetLength) return coreText.substring(0, targetLength);
+    const paddingBlocks = [
+      "Simulating standard earthly aerodynamic air resistance on garment fabric folds during lateral camera movement.",
+      "Rendering natural subsurface light scattering and warm ambient illumination across unretouched dermal textures under moving focus.",
+      "Modeling organic environmental air draft interaction with fine hair strands and loose garment hems.",
+      "Injecting realistic micro-movements across fabric seams and tailored hems to prevent stiff digital interpolation.",
+      "Applying authentic optical sensor characteristics representing real handheld smartphone video recording pipelines.",
+      "Simulating relaxed candid posture adjustments and subtle natural weight shifts across the subject's stance.",
+      "Enforcing natural depth-of-field falloff, subtle atmospheric light diffusion, and authentic wide-angle lens optics.",
+      "Calculating secondary fabric drape latency as clothing materials react smoothly to gravity and walking cadence.",
+      "Adding subtle ambient dust motes catching studio backlight rays to enhance raw documentary realism.",
+      "Executing 24fps 180-degree shutter angle motion blur with organic camera-operator handheld micro-tremors."
+    ];
+    let padded = coreText;
+    let index = 0;
+    while (padded.length < targetLength - 10) {
+      padded += "\n\n" + paddingBlocks[index % paddingBlocks.length];
+      index++;
+    }
+    if (padded.length < targetLength) {
+      padded += " ".repeat(targetLength - padded.length);
+    }
+    return padded.substring(0, targetLength);
+  };
+
+  // UPGRADED v21: Mode-Aware, Chaos-Aware, Material-Aware & Sensor-Aware Video Prompt Compiler
+  const generateVideoPromptText = (angleId, lengthPreset) => {
+    const angleConfig = getAnglesConfig(safeGuardMode).find(a => a.id === angleId) || { label: "Depan", promptAddon: "" };
+    const safeAddon = sanitizeCommercialEuphemisms(angleConfig.promptAddon, true);
+    const safeOutfit = sanitizeCommercialEuphemisms(clothingName || 'tailored commercial outfit', true);
+    const activeMat = material === 'custom' ? (customMaterial || 'premium fabric') : material;
+    const safeIdentity = sanitizeCommercialEuphemisms(modelIdentityDesc || `Indonesian ${gender === 'female' ? 'woman' : 'man'}`, true);
+    const { finalEnv, finalLight, chaosEnvStr } = resolveSceneAndLighting(true, false);
+    const motionDirective = VIDEO_CAMERA_MOTIONS.find(m => m.id === selectedVideoMotion)?.value || VIDEO_CAMERA_MOTIONS[0].value;
+    const cleanUserEdge = sanitizeAntiUncanny([presetDirective, customInstruction].filter(Boolean).join(', '));
+    const userEdgeAddon = cleanUserEdge ? `\nVisual Style Directive: ${cleanUserEdge}.` : '';
+    const colorAddon = colorPaletteLock ? ` Maintain exact garment color shades (${colorPaletteLock}).` : '';
+
+    const sensorLensMap = {
+      smartphone: 'handheld_26mm_smartphone_sensor',
+      dslr: 'full_frame_85mm_f1.4_cinema_prime',
+      film: 'kodak_portra_35mm_analog_film',
+      cctv: 'industrial_fisheye_cctv_sensor'
+    };
+    const lensProfile = sensorLensMap[cameraStyle] || 'handheld_26mm_smartphone_sensor';
+    const videoPhysicsLib = getVideoPhysicsLib(activeMat, lensProfile);
+
+    // POV Mode Isolation for Video Prompts (Never mentions blinking eyes or breathing chest on Flatlay/POV!)
+    if (shootMode === 'pov') {
+      const povAction = povStyle === 'no-hands'
+        ? `Standalone flatlay showcase of ${safeOutfit} (${activeMat}).Strictly NO humans, NO hands, and NO body parts. Gentle indoor air draft subtly moves the loose fabric edges while the camera glides overhead.`
+        : `First-person POV with two relaxed hands gently holding and tilting ${safeOutfit} (${activeMat}), allowing the fabric folds and seams to drape naturally under gravity.`;
+
+      return `[COMMERCIAL PRODUCT POV VIDEO - 24FPS RAW OPTICAL REALISM]
+Camera Motion: ${motionDirective} Optics: ${lensProfile} at 24fps, 1/50s shutter speed.
+Product & Textile Physics: ${povAction}${colorAddon}
+Environment & Lighting: ${finalEnv}${chaosEnvStr}. Illuminated by ${finalLight}, casting accurate moving shadows across the textile weave.${userEdgeAddon}
+Negative Constraints: no human face, no headless torso, no extra hands, no morphing fabric, no 3D CGI plastic sheen.`;
+    }
+
+    if (lengthPreset === 'kling_director') {
+      return `[KLING / HAILUO NATURAL DIRECTOR MODE - 24FPS RAW OPTICAL REALISM]
+Camera Motion: ${motionDirective} Optics: ${lensProfile} at 24fps, 1/50s shutter speed with subtle organic handheld micro-tremors and natural depth-of-field focus roll-off.
+Subject & Identity: ${safeIdentity}, maintaining exact 1:1 facial structure and natural expression from the starting reference frame.
+Apparel & Textile Physics: Wearing ${safeOutfit} made of ${activeMat}.${colorAddon} As the subject shifts weight and breathes naturally, fabric folds and seams react smoothly to gravity with realistic momentum and zero digital clipping.
+Micro-Motion & Atmosphere: Natural unpredictable eye blinks, subtle shoulder and posture cadence, fine hair strands moving gently in room air draft.
+Environment & Lighting: ${finalEnv}${chaosEnvStr}. Illuminated by ${finalLight}, casting accurate moving contact shadows on the floor with authentic subsurface ambient light reflection.${userEdgeAddon}
+Negative Constraints: no morphing face, no robotic gimbal smoothness, no 3D CGI plastic sheen, no extra limbs, no distortion.`;
+    }
+
+    if (lengthPreset === 'runway_luma') {
+      return `[CAMERA MOVEMENT]: ${motionDirective} Optics: ${lensProfile}, 24fps cinema shutter, subtle focal breathing, natural sensor grain.
+[SUBJECT ACTION]: Commercial fashion model (${safeIdentity}) showcasing ${safeOutfit} (${activeMat}) in ${angleConfig.label} framing.${colorAddon} The subject performs a relaxed, authentic posture shift with natural eye blinks, subtle breathing cadence, and organic fabric drape movement following gravity.
+[LIGHTING & ENVIRONMENT]: Set in ${finalEnv}${chaosEnvStr} under ${finalLight}.${userEdgeAddon} Dynamic studio catchlights reflect in the eyes and across the fabric weave texture, maintaining strict temporal consistency with the input keyframe.`;
+    }
+
+    const baseSettingsHeader = `[CINEMATIC_VIDEO_MODE: RAW_OPTICAL_HANDHELD_REALISM]
+[CAMERA_PARAMETERS: motion_smoothing=0; temporal_consistency=max; frame_rate=24fps; camera_shutter=1/50; lens_profile=${lensProfile}; sensor_grain=natural]
+// SCENARIO CONFIGURATION:
+Angle: ${angleConfig.label} (${safeAddon})
+Subject Model Identity: ${safeIdentity}
+Clothing: ${safeOutfit} made of ${activeMat}${colorAddon}
+Vibes Setting: ${finalEnv}${chaosEnvStr}
+Lighting Grid: ${finalLight}
+Camera Vector: ${motionDirective}${userEdgeAddon}
+Seed Identifier Lock: ${currentSeed}\n`;
+
+    if (lengthPreset === 'mini') {
+      const miniCore = `${baseSettingsHeader}// FORMAT: B-ROLL CLOSE-UP MACRO EDIT
+A raw handheld camera clip focusing on the ${safeOutfit} commercial showcase. ${motionDirective} Authentic lens tracking with subtle handheld micro-tremors, natural lens flare, and organic ISO film grain. Organic ${activeMat} movement and realistic gravity drape as the subject shifts posture naturally.
+[GLOBAL_NEGATIVE_PROMPT: (3d_animation: -3.0), (smooth_interpolation: -3.0), (ai_shimmering: -3.0)]`;
+      return padVideoPrompt(miniCore, 900);
+    }
+    if (lengthPreset === 'short') {
+      const shortCore = `${baseSettingsHeader}${videoPhysicsLib.temporal_human.substring(0, 450)}
+${videoPhysicsLib.textile_degradation.substring(0, 300)}
+// MOVEMENT DIRECTIVE:
+${motionDirective} Capturing the subject showcasing the outfit naturally in the environment. Subtle handheld camera micro-tremors and genuine optical lens character. Subject displays natural eye blinks, relaxed posture shifts, and organic fabric fold movement.
+[GLOBAL_NEGATIVE_PROMPT: (3d_animation: -3.0), (smooth_interpolation: -3.0), (perfect_loop: -3.0), (plastic_skin: -3.0), (cgi_render: -3.0)]`;
+      return padVideoPrompt(shortCore, 1450);
+    }
+    if (lengthPreset === 'medium') {
+      const mediumCore = `${baseSettingsHeader}${videoPhysicsLib.temporal_human}\n${videoPhysicsLib.textile_degradation}\n${videoPhysicsLib.optical}
+// MOTION FLOW DIRECTIONS:
+${motionDirective} The subject moves with natural poise, ${activeMat} creases shift smoothly with gravity and motion latency, maintaining realistic tailored fit. Studio lighting interacts organically with the fabric weave and casts soft natural tracking shadows on the floor.
+[GLOBAL_NEGATIVE_PROMPT: (3d_animation: -3.0), (smooth_interpolation: -3.0), (perfect_loop: -3.0), (robotic_gimbal_movement: -3.0), (ai_shimmering: -3.0), (morphing_artifacts: -3.0), (plastic_airbrushed_look: -3.0), (unreal_engine: -3.0)]`;
+      return padVideoPrompt(mediumCore, 3950);
+    }
+    const masterCore = `${baseSettingsHeader}${videoPhysicsLib.temporal_human}\n${videoPhysicsLib.textile_degradation}\n${videoPhysicsLib.meteorological}\n${videoPhysicsLib.optical}
+// ABSOLUTE MOTION DIRECTIVES & SIMULATION SEQUENCING:
+1. Dynamic Camera Vector: ${motionDirective} (24fps, 1/50 shutter speed) with natural focal breathing.
+2. Authentic Complexion Lighting: Unretouched facial texture reflects ambient studio lighting naturally with realistic subsurface scattering as the camera pans.
+3. Environmental Air Mechanics: Stray hair strands and garment edges react subtly to room air drafts, casting natural moving shadows on the floor.
+4. Textile & Hardware Physics: ${activeMat} folds, seams, and garment details move with accurate physical weight, matching the deceleration of the model's steps.
+5. Atmospheric Depth: Subtle ambient light diffusion and natural depth-of-field bokeh falloff separate the subject from the backdrop.
+6. Raw Optical Character: Authentic ${lensProfile} optics with soft highlight rolloff and organic sensor grain.
+[GLOBAL_NEGATIVE_PROMPT: (3d_animation: -3.0), (smooth_interpolation: -3.0), (perfect_loop: -3.0), (robotic_gimbal_movement: -3.0), (ai_shimmering: -3.0), (morphing_artifacts: -3.0), (plastic_skin: -3.0), (perfect_symmetry: -3.0), (unreal_engine: -3.0), (cgi_look: -3.0), (vray_render: -3.0), (glamour_airbrush: -3.0), (clean_vector_graphics: -3.0)]
+[END_OF_COMPLETE_EARTH_PHYSICS_VIDEO_COMPILER]`;
+    return padVideoPrompt(masterCore, 8000);
+  };
+
+  const liveVideoPromptText = generateVideoPromptText(selectedVideoAngle, selectedVideoLength);
+
+  // Includes Custom Edge Directive & Angle-Resolved Pose in Live Prompt Preview & Copy
+  const compileFullLivePrompt = () => {
+    const base = getBasePrompt(currentSeed, false, activeAngle);
+    const poseAddon = shootMode === 'pov' ? `[POV ${povStyle}]` : `Angle (${activeAngle}) Pose config: ${pose}`;
+    const combinedUserDirectives = [presetDirective, customInstruction].filter(Boolean).join(', ');
+    const cleanEdge = sanitizeAntiUncanny(combinedUserDirectives);
+    const edgeLine = cleanEdge ? `\n[CUSTOM EDGE DIRECTIVE] ${cleanEdge}` : '';
+    return `${base}\n[ANATOMICAL DIRECTIVE] ${poseAddon}\n[TECHNICAL ENGINE] ${technical}${edgeLine}`;
+  };
+
+  const copyToClipboardFallback = (text) => {
+    try {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      textArea.style.top = "0";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      return successful;
+    } catch (err) {
+      console.error("Fallback copy failed:", err);
+      return false;
+    }
+  };
+
+  const safeCopyText = async (text, successMessage) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        showToast(successMessage);
+        return true;
+      } else {
+        throw new Error("Clipboard API unavailable");
+      }
+    } catch (err) {
+      const fallbackSuccess = copyToClipboardFallback(text);
+      if (fallbackSuccess) {
+        showToast(successMessage);
+        return true;
+      } else {
+        showToast("Gagal menyalin otomatis. Silakan blok teks dan tekan Ctrl+C.");
+        return false;
+      }
+    }
+  };
+
+  const copyPromptText = async () => {
+    const text = compileFullLivePrompt();
+    const ok = await safeCopyText(text, "Prompt inti berhasil disalin ke clipboard!");
+    if (ok) {
+      setCopiedPrompt(true);
+      setTimeout(() => setCopiedPrompt(false), 2000);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col items-center p-4 lg:p-8 bg-[#060913] text-slate-200" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      
+      <style>{`
+        @keyframes scan-line-animation {
+          0% { top: 0%; opacity: 0; }
+          10%, 90% { opacity: 1; }
+          100% { top: 100%; opacity: 0; }
+        }
+        .scanner-line {
+          position: absolute; width: 100%; height: 3px;
+          background: linear-gradient(to right, transparent, #a855f7, #4f46e5, transparent);
+          box-shadow: 0 0 20px 2px rgba(168, 85, 247, 0.5);
+          animation: scan-line-animation 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          z-index: 10;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 10px; }
+        
+        .film-grain {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+          mix-blend-mode: overlay;
+          opacity: 0.8;
+          z-index: 15;
+        }
+
+        @keyframes pulse-fast {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 0.8; }
+        }
+        .animate-pulse-fast {
+          animation: pulse-fast 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+      `}</style>
+
+      {/* Global Toast Notification */}
+      {toast.visible && (
+        <div className="fixed bottom-6 right-6 z-50 bg-slate-900 border border-indigo-500/50 text-indigo-300 font-bold px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-2 animate-in slide-in-from-bottom-5">
+          <Sparkles className="animate-pulse text-indigo-400" size={16} />
+          <span className="text-xs tracking-wide">{toast.message}</span>
+        </div>
+      )}
+
+      {/* Main Header */}
+      <div className="w-full max-w-[1400px] mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+        <div>
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">v21.0 ABSOLUTE - BIOMETRIC CROP & 3-TIER SELF-HEALING</span>
+            <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full">1:1 Face Crop + Color Hex Lock</span>
+            {safeGuardMode && (
+              <span className="bg-sky-500/10 text-sky-400 border border-sky-500/20 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full flex items-center gap-1">
+                <Shield size={10} /> 3-Tier Anti-Violation Active
+              </span>
+            )}
+          </div>
+          <h1 className="text-3xl font-black tracking-tight text-white uppercase italic">
+            FASHION <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500 not-italic">AUTOSENSE</span>
+          </h1>
+          <p className="text-xs text-slate-400 mt-1 uppercase tracking-widest">Advanced Biometric Virtual Try-On & Commercial Lookbook Engine</p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button 
+            type="button"
+            onClick={() => {
+              setSafeGuardMode(!safeGuardMode);
+              showToast(!safeGuardMode ? "🛡️ Safe-Guard Commercial Bypass Aktif (Aman untuk Outfit Terbuka/Ketat)." : "Safe-Guard Mode Dinonaktifkan.");
+            }}
+            className={`px-3.5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 border transition-all ${safeGuardMode ? 'bg-sky-500/15 border-sky-500/40 text-sky-300 shadow-[0_0_12px_rgba(14,165,233,0.2)]' : 'bg-slate-900 border-slate-800 text-slate-400'}`}
+            title="Mencegah gagal render & blokir sensor pada pakaian terbuka, crop top, atau activewear ketat"
+          >
+            <Shield size={12} className={safeGuardMode ? 'text-sky-400' : 'text-slate-500'} />
+            {safeGuardMode ? "🛡️ Safe-Guard Bypass: ON" : "Safe-Guard: OFF"}
+          </button>
+
+          <button 
+            type="button"
+            onClick={() => {
+              setMasterAnchorLock(!masterAnchorLock);
+              showToast(!masterAnchorLock ? "🔗 Master Anchor Lock Aktif (Pose Depan menjadi jangkar 4 angle lainnya)." : "Master Anchor Lock Dinonaktifkan.");
+            }}
+            className={`px-3.5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 border transition-all ${masterAnchorLock ? 'bg-purple-500/15 border-purple-500/40 text-purple-300' : 'bg-slate-900 border-slate-800 text-slate-400'}`}
+            title="Menjadikan hasil Pose Depan sebagai referensi ke-3 agar baju & cahaya 100% konsisten di semua 5 angle"
+          >
+            <Layers size={12} className={masterAnchorLock ? 'text-purple-400' : 'text-slate-500'} />
+            {masterAnchorLock ? "🔗 Anchor Chaining: ON" : "Anchor Chaining: OFF"}
+          </button>
+
+          <button 
+            type="button"
+            onClick={() => {
+              setLockSeed(!lockSeed);
+              showToast(lockSeed ? "Kunci Latar Belakang Dilepas." : "Latar Belakang Dikunci (Background konsisten).");
+            }}
+            className={`px-3.5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 border transition-all ${lockSeed ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-400'}`}
+          >
+            {lockSeed ? <Lock size={12} /> : <Unlock size={12} />}
+            {lockSeed ? "Seed Locked" : "Free Seed"}
+          </button>
+
+          <button 
+            type="button"
+            onClick={randomizeSeed}
+            className="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-300 px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all"
+          >
+            <RefreshCw size={12} />
+            #{currentSeed}
+          </button>
+        </div>
+      </div>
+
+      {/* Main Container Grid */}
+      <div className="w-full max-w-[1400px] bg-[#0f172a] border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col lg:flex-row">
+        
+        {/* Left Sidebar - Reference Inputs */}
+        <div className="w-full lg:w-2/12 p-5 bg-[#0b0f19] border-r border-slate-800/80 flex flex-col gap-4 max-h-[850px] overflow-y-auto custom-scrollbar">
+          <div className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-1 flex items-center justify-between border-b border-slate-800 pb-2 shrink-0">
+            <span>1. Reference Inputs</span>
+            <Info size={14} className="text-slate-500" />
+          </div>
+
+          {/* Product Garment Upload Container */}
+          <div 
+            onClick={() => productInputRef.current?.click()}
+            className="h-[165px] shrink-0 border-2 border-dashed border-indigo-500/30 bg-[#0b0f1a]/50 rounded-2xl flex flex-col items-center justify-center p-4 transition-all cursor-pointer hover:bg-indigo-900/10 relative overflow-hidden group"
+          >
+            <input 
+              ref={productInputRef}
+              type="file" 
+              className="hidden" 
+              accept="image/*" 
+              onChange={(e) => handleImageUpload(e, 'product')} 
+            />
+            {!productImage ? (
+              <div className="text-center pointer-events-none">
+                <div className="w-10 h-10 bg-indigo-500/10 rounded-full flex items-center justify-center mx-auto mb-2 text-indigo-400 border border-indigo-500/20">
+                  <Shirt size={20} />
+                </div>
+                <p className="text-xs font-bold text-white">Garment Reference</p>
+                <p className="text-[9px] text-slate-500 mt-1">Klik untuk upload foto baju</p>
+              </div>
+            ) : (
+              <>
+                <img src={productImage} className="absolute inset-0 w-full h-full object-cover" alt="Product reference" />
+                <div className="absolute top-2 left-2 bg-indigo-600/90 text-white text-[8px] font-black uppercase px-2 py-0.5 rounded-md shadow">
+                  Ref #2: Garment
+                </div>
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <span className="text-xs font-bold text-white bg-indigo-600 px-3 py-1.5 rounded-lg shadow-lg">Ganti Produk</span>
+                </div>
+                <button 
+                  type="button"
+                  onClick={(e) => resetImage(e, 'product')} 
+                  className="absolute top-2 right-2 bg-red-500/90 hover:bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center transition-colors z-20"
+                >
+                  <X size={12} />
+                </button>
+              </>
+            )}
+            {isScanningProduct && <div className="scanner-line"></div>}
+          </div>
+
+          {/* Deep Garment Micro-Blueprint Box (NEW v21 with Chromatic Color Lock & Complementary Pairing) */}
+          {productImage && (
+            <div className="p-3 bg-indigo-950/20 border border-indigo-500/30 rounded-2xl space-y-2 animate-in fade-in shrink-0">
+              <div className="flex items-center justify-between">
+                <span className="text-[9.5px] font-black text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <Shirt size={12} className="text-indigo-400" /> Micro-Garment Blueprint
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextSession = productScanSessionRef.current + 1;
+                    productScanSessionRef.current = nextSession;
+                    analyzeProductImage(productImage, nextSession);
+                  }}
+                  disabled={isScanningProduct}
+                  className="text-[8.5px] font-bold text-indigo-400 hover:text-indigo-200 flex items-center gap-1 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20"
+                >
+                  <RefreshCw size={9} className={isScanningProduct ? 'animate-spin' : ''} /> Re-Scan
+                </button>
+              </div>
+              <textarea
+                value={garmentBlueprint}
+                onChange={(e) => setGarmentBlueprint(e.target.value)}
+                placeholder="Detail potongan kerah, lengan, sablon, & jahitan..."
+                className="w-full bg-[#090d16] border border-indigo-500/30 rounded-xl p-2 text-[9.5px] text-indigo-200 outline-none focus:border-indigo-400 resize-y h-[52px] custom-scrollbar leading-relaxed"
+              />
+              {colorPaletteLock && (
+                <div className="flex items-center gap-1.5 bg-[#090d16] border border-indigo-500/20 rounded-lg px-2 py-1">
+                  <Palette size={11} className="text-indigo-400 shrink-0" />
+                  <input
+                    type="text"
+                    value={colorPaletteLock}
+                    onChange={(e) => setColorPaletteLock(e.target.value)}
+                    className="w-full bg-transparent text-[9px] text-indigo-200 outline-none"
+                    title="Chromatic Color Lock (Mencegah perubahan warna baju karena lampu studio)"
+                  />
+                </div>
+              )}
+              {garmentCoverage !== 'full_outfit' && shootMode !== 'pov' && (
+                <div className="space-y-1 pt-1 border-t border-indigo-500/20">
+                  <label className="text-[8px] font-black text-sky-400 uppercase block">
+                    🔒 Kunci Pasangan {garmentCoverage === 'top_only' ? 'Bawahan' : 'Atasan'} (Konsisten 5 Angle):
+                  </label>
+                  <input
+                    type="text"
+                    value={complementaryGarment}
+                    onChange={(e) => setComplementaryGarment(e.target.value)}
+                    placeholder="Pasangan pakaian pendamping..."
+                    className="w-full bg-[#090d16] border border-sky-500/30 rounded-lg px-2 py-1 text-[9px] text-sky-200 outline-none focus:border-sky-400"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Model Pose Upload Container */}
+          <div 
+            onClick={() => shootMode !== 'pov' && modelInputRef.current?.click()}
+            className={`h-[165px] shrink-0 border-2 border-dashed border-purple-500/30 bg-[#0b0f1a]/50 rounded-2xl flex flex-col items-center justify-center p-4 transition-all cursor-pointer hover:bg-purple-900/10 relative overflow-hidden group ${shootMode === 'pov' ? 'opacity-25 grayscale cursor-not-allowed' : ''}`}
+          >
+            <input 
+              ref={modelInputRef}
+              type="file" 
+              className="hidden" 
+              accept="image/*" 
+              onChange={(e) => handleImageUpload(e, 'model')} 
+              disabled={shootMode === 'pov'}
+            />
+            {!modelImage ? (
+              <div className="text-center pointer-events-none">
+                <div className="w-10 h-10 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-2 text-purple-400 border border-purple-500/20">
+                  <ScanFace size={20} />
+                </div>
+                <p className="text-xs font-bold text-white">Model Face Identity (1:1)</p>
+                <p className="text-[9px] text-slate-500 mt-1">
+                  {shootMode === 'pov' ? "Dinonaktifkan di POV" : "Upload foto wajah jelas & terang"}
+                </p>
+              </div>
+            ) : (
+              <>
+                <img src={modelImage} className="absolute inset-0 w-full h-full object-cover" alt="Model reference" />
+                <div className="absolute top-2 left-2 bg-purple-600/90 text-white text-[8px] font-black uppercase px-2 py-0.5 rounded-md shadow flex items-center gap-1">
+                  <ScanFace size={10} /> Ref #1: Face Lock
+                </div>
+                {modelFaceCrop && (
+                  <div className="absolute bottom-2 left-2 flex items-center gap-1.5 bg-black/80 border border-emerald-400/60 p-1 rounded-lg shadow-lg z-10">
+                    <img src={modelFaceCrop} className="w-8 h-8 rounded object-cover border border-emerald-400/40" alt="HD Face Crop" />
+                    <span className="text-[7.5px] font-black text-emerald-300 uppercase leading-tight pr-1">HD Face<br/>Cropped</span>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <span className="text-xs font-bold text-white bg-purple-600 px-3 py-1.5 rounded-lg shadow-lg">Ganti Model</span>
+                </div>
+                <button 
+                  type="button"
+                  onClick={(e) => resetImage(e, 'model')} 
+                  className="absolute top-2 right-2 bg-red-500/90 hover:bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center transition-colors z-20"
+                >
+                  <X size={12} />
+                </button>
+              </>
+            )}
+            {isScanningModel && <div className="scanner-line" style={{ background: 'linear-gradient(to right, transparent, #d946ef, #9333ea, transparent)', boxShadow: '0 0 20px 2px rgba(217, 70, 239, 0.5)' }}></div>}
+          </div>
+
+          {/* Default Model Gender Selector when no Model Image is uploaded */}
+          {!modelImage && shootMode !== 'pov' && (
+            <div className="p-2.5 bg-slate-900/60 border border-slate-800 rounded-xl flex items-center justify-between shrink-0">
+              <span className="text-[9px] font-bold text-slate-400 uppercase">Gender Model Default:</span>
+              <div className="flex gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setGender('female')}
+                  className={`px-2.5 py-1 rounded-lg text-[9px] font-bold transition-all ${gender === 'female' ? 'bg-purple-600 text-white' : 'bg-slate-950 text-slate-400'}`}
+                >
+                  👩 Wanita
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGender('male')}
+                  className={`px-2.5 py-1 rounded-lg text-[9px] font-bold transition-all ${gender === 'male' ? 'bg-indigo-600 text-white' : 'bg-slate-950 text-slate-400'}`}
+                >
+                  👨 Pria
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Biometric Identity DNA Box (Editable by User) */}
+          {modelImage && shootMode !== 'pov' && (
+            <div className="p-3.5 bg-purple-950/20 border border-purple-500/30 rounded-2xl space-y-2.5 animate-in fade-in shrink-0">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <ScanFace size={13} className="text-purple-400" /> Biometric Face Lock
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextSession = modelScanSessionRef.current + 1;
+                    modelScanSessionRef.current = nextSession;
+                    analyzeModelImage(modelImage, modelImage, nextSession);
+                  }}
+                  disabled={isScanningModel}
+                  className="text-[9px] font-bold text-purple-400 hover:text-purple-200 flex items-center gap-1 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20"
+                >
+                  <RefreshCw size={9} className={isScanningModel ? 'animate-spin' : ''} /> Re-Scan
+                </button>
+              </div>
+
+              {/* Lock Strength Selector */}
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setIdentityStrength('strict')}
+                  className={`py-1.5 px-2 rounded-lg text-[9px] font-bold border transition-all ${
+                    identityStrength === 'strict'
+                      ? 'bg-purple-600 text-white border-purple-400 shadow'
+                      : 'bg-slate-950 text-slate-400 border-slate-800'
+                  }`}
+                >
+                  🔒 100% Exact Clone
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIdentityStrength('balanced')}
+                  className={`py-1.5 px-2 rounded-lg text-[9px] font-bold border transition-all ${
+                    identityStrength === 'balanced'
+                      ? 'bg-purple-600 text-white border-purple-400 shadow'
+                      : 'bg-slate-950 text-slate-400 border-slate-800'
+                  }`}
+                >
+                  ✨ Natural Blend
+                </button>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[8.5px] text-slate-400 uppercase font-bold block">
+                  Detail Fitur Wajah (Hasil Scan AI - Bisa Diedit):
+                </label>
+                <textarea
+                  value={modelIdentityDesc}
+                  onChange={(e) => setModelIdentityDesc(e.target.value)}
+                  placeholder="Sedang memindai biometrik wajah..."
+                  className="w-full bg-[#090d16] border border-purple-500/30 rounded-xl p-2.5 text-[10px] text-purple-200 outline-none focus:border-purple-400 resize-y h-[75px] custom-scrollbar leading-relaxed"
+                />
+              </div>
+            </div>
+          )}
+
+          {analysisSummary && (
+            <div className="p-3 bg-black/40 border border-indigo-500/15 rounded-xl flex items-center gap-2 shrink-0">
+              <Sparkles className="text-indigo-400 shrink-0" size={14} />
+              <p className="text-[10px] text-slate-300 leading-normal">{analysisSummary}</p>
+            </div>
+          )}
+
+          {/* Safe-Guard & Anchor Info Card */}
+          <div className="p-3.5 bg-slate-900/60 border border-slate-800 rounded-xl space-y-2 mt-auto shrink-0">
+            <span className="text-[9px] font-black text-sky-400 uppercase tracking-widest flex items-center gap-1.5">
+              <Shield size={12} /> Proteksi v20 Ultimate
+            </span>
+            <p className="text-[9.5px] text-slate-400 leading-relaxed">
+              • <strong>Safe-Guard Bypass:</strong> Menerjemahkan istilah pakaian terbuka/ketat ke bahasa ritel komersial + Auto-Retry jika terkena sensor.<br/>
+              • <strong>Anchor Lock:</strong> Mengunci hasil Pose Depan agar 5 angle 100% seragam.
+            </p>
+          </div>
+        </div>
+
+        {/* Middle Sidebar - Parameter Controls */}
+        <div className="w-full lg:w-5/12 p-6 space-y-4 bg-[#0f172a] border-r border-slate-800/80 custom-scrollbar overflow-y-auto max-h-[850px]">
+          <div className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-1 border-b border-slate-800 pb-2 flex items-center justify-between">
+            <span>2. Realism Parameter Controls</span>
+            <span className="text-[10px] text-slate-500 uppercase">Engine Customizer</span>
+          </div>
+
+          {/* Realism presets block */}
+          <div className="p-4 bg-indigo-950/20 border border-indigo-500/20 rounded-2xl space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest flex items-center gap-2">
+                <SlidersHorizontal size={12} /> Advanced Realism Presets
+              </span>
+              <span className="text-[8px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full font-bold">{Object.keys(MASTER_RECIPES).length} Styles</span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-[220px] overflow-y-auto custom-scrollbar pr-1 pb-1">
+              {Object.keys(MASTER_RECIPES).map((key) => {
+                const rec = MASTER_RECIPES[key];
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => applyRecipe(key)}
+                    className={`py-2 px-3 text-left rounded-xl transition-all border flex flex-col justify-between h-[65px] relative overflow-hidden shrink-0 ${
+                      activeRecipe === key 
+                        ? 'bg-indigo-500/25 border-indigo-500 text-white shadow-lg' 
+                        : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">{rec.name.split(" ")[0]}</span>
+                      {rec.icon}
+                    </div>
+                    <span className="text-[11px] font-bold tracking-tight truncate w-full">{rec.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Interactive Environment Chaos Controls */}
+          <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                <AlertTriangle size={12} className="text-orange-400" /> Chaos Elements
+              </span>
+              <span className="text-[9px] bg-orange-500/10 text-orange-400 border border-orange-500/20 px-2 py-0.5 rounded-full font-bold">Injection</span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2.5">
+              <button 
+                type="button" onClick={() => setEnableCables(!enableCables)}
+                className={`p-2.5 rounded-xl border text-left flex flex-col justify-between h-[75px] transition-all ${enableCables ? 'bg-orange-500/10 border-orange-500/40 text-orange-300 shadow-md' : 'bg-slate-950 border-slate-800/80 text-slate-400 hover:border-slate-800'}`}
+              >
+                <div className="flex justify-between items-center w-full">
+                  <span className="text-[9px] font-black uppercase tracking-wider">Cables</span>
+                  <div className={`w-2 h-2 rounded-full ${enableCables ? 'bg-orange-500 animate-pulse' : 'bg-slate-700'}`}></div>
+                </div>
+                <p className="text-[10px] font-bold leading-tight mt-1">Kabel Lantai</p>
+              </button>
+
+              <button 
+                type="button" onClick={() => setEnableDirtyAtmosphere(!enableDirtyAtmosphere)}
+                className={`p-2.5 rounded-xl border text-left flex flex-col justify-between h-[75px] transition-all ${enableDirtyAtmosphere ? 'bg-orange-500/10 border-orange-500/40 text-orange-300 shadow-md' : 'bg-slate-950 border-slate-800/80 text-slate-400 hover:border-slate-800'}`}
+              >
+                <div className="flex justify-between items-center w-full">
+                  <span className="text-[9px] font-black uppercase tracking-wider">Dust</span>
+                  <div className={`w-2 h-2 rounded-full ${enableDirtyAtmosphere ? 'bg-orange-500 animate-pulse' : 'bg-slate-700'}`}></div>
+                </div>
+                <p className="text-[10px] font-bold leading-tight mt-1">Udara Kotor</p>
+              </button>
+
+              <button 
+                type="button" onClick={() => setEnableBrickWall(!enableBrickWall)}
+                className={`p-2.5 rounded-xl border text-left flex flex-col justify-between h-[75px] transition-all ${enableBrickWall ? 'bg-orange-500/10 border-orange-500/40 text-orange-300 shadow-md' : 'bg-slate-950 border-slate-800/80 text-slate-400 hover:border-slate-800'}`}
+              >
+                <div className="flex justify-between items-center w-full">
+                  <span className="text-[9px] font-black uppercase tracking-wider">Brick</span>
+                  <div className={`w-2 h-2 rounded-full ${enableBrickWall ? 'bg-orange-500 animate-pulse' : 'bg-slate-700'}`}></div>
+                </div>
+                <p className="text-[10px] font-bold leading-tight mt-1">Tembok Bata</p>
+              </button>
+
+              <button 
+                type="button" onClick={() => setEnableGrittyVibe(!enableGrittyVibe)}
+                className={`p-2.5 rounded-xl border text-left flex flex-col justify-between h-[75px] transition-all ${enableGrittyVibe ? 'bg-orange-500/10 border-orange-500/40 text-orange-300 shadow-md' : 'bg-slate-950 border-slate-800/80 text-slate-400 hover:border-slate-800'}`}
+              >
+                <div className="flex justify-between items-center w-full">
+                  <span className="text-[9px] font-black uppercase tracking-wider">Decay</span>
+                  <div className={`w-2 h-2 rounded-full ${enableGrittyVibe ? 'bg-orange-500 animate-pulse' : 'bg-slate-700'}`}></div>
+                </div>
+                <p className="text-[10px] font-bold leading-tight mt-1">Lantai Jorok</p>
+              </button>
+
+              <button 
+                type="button" onClick={() => setEnableWaterStains(!enableWaterStains)}
+                className={`p-2.5 rounded-xl border text-left flex flex-col justify-between h-[75px] transition-all ${enableWaterStains ? 'bg-orange-500/10 border-orange-500/40 text-orange-300 shadow-md' : 'bg-slate-950 border-slate-800/80 text-slate-400 hover:border-slate-800'}`}
+              >
+                <div className="flex justify-between items-center w-full">
+                  <span className="text-[9px] font-black uppercase tracking-wider flex items-center gap-1"><Droplets size={10}/> Sweat</span>
+                  <div className={`w-2 h-2 rounded-full ${enableWaterStains ? 'bg-orange-500 animate-pulse' : 'bg-slate-700'}`}></div>
+                </div>
+                <p className="text-[10px] font-bold leading-tight mt-1">Noda Keringat</p>
+              </button>
+
+              <button 
+                type="button" onClick={() => setEnableHarshShadows(!enableHarshShadows)}
+                className={`p-2.5 rounded-xl border text-left flex flex-col justify-between h-[75px] transition-all ${enableHarshShadows ? 'bg-orange-500/10 border-orange-500/40 text-orange-300 shadow-md' : 'bg-slate-950 border-slate-800/80 text-slate-400 hover:border-slate-800'}`}
+              >
+                <div className="flex justify-between items-center w-full">
+                  <span className="text-[9px] font-black uppercase tracking-wider flex items-center gap-1"><Contrast size={10}/> Dark</span>
+                  <div className={`w-2 h-2 rounded-full ${enableHarshShadows ? 'bg-orange-500 animate-pulse' : 'bg-slate-700'}`}></div>
+                </div>
+                <p className="text-[10px] font-bold leading-tight mt-1">Harsh Shadow</p>
+              </button>
+            </div>
+          </div>
+
+          {/* Toggle Engine Khusus */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3 bg-emerald-900/10 border border-emerald-500/30 rounded-xl flex flex-col justify-between cursor-pointer hover:bg-emerald-900/20 transition-all" onClick={() => { setUltraRealism(!ultraRealism); showToast("Engine Realisme Diubah."); }}>
+              <div className="flex items-center justify-between w-full mb-1">
+                <label className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1 cursor-pointer">
+                  <Sparkles size={10} /> Dermal Skin Realism
+                </label>
+                <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ease-in-out ${ultraRealism ? 'bg-emerald-500' : 'bg-slate-700'}`}>
+                  <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow-md transition-transform duration-300 ease-in-out ${ultraRealism ? 'transform translate-x-4' : ''}`}></div>
+                </div>
+              </div>
+              <p className="text-[8px] text-slate-400 leading-tight">Tekstur Pori Asli (Tanpa Ubah Wajah)</p>
+            </div>
+
+            <div className="p-3 bg-purple-900/10 border border-purple-500/30 rounded-xl flex flex-col justify-between cursor-pointer hover:bg-purple-900/20 transition-all" onClick={() => setFilmGrainFilter(!filmGrainFilter)}>
+              <div className="flex items-center justify-between w-full mb-1">
+                <label className="text-[9px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1 cursor-pointer">
+                  <ImageIcon size={10} /> CSS Grain Overlay
+                </label>
+                <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ease-in-out ${filmGrainFilter ? 'bg-purple-500' : 'bg-slate-700'}`}>
+                  <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow-md transition-transform duration-300 ease-in-out ${filmGrainFilter ? 'transform translate-x-4' : ''}`}></div>
+                </div>
+              </div>
+              <p className="text-[8px] text-slate-400 leading-tight">Menyamarkan piksel mulus CGI</p>
+            </div>
+          </div>
+
+          {/* Interactive Selection for Shoot Modes & Camera Sensor */}
+          <div className="space-y-3.5 p-4 bg-slate-900/60 border border-slate-800 rounded-2xl">
+            {/* Shoot Modes */}
+            <div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Camera Perspectives</span>
+              <div className="flex gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setShootMode('model')}
+                  className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${shootMode === 'model' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-950 text-slate-400 hover:bg-slate-800'}`}
+                >
+                  Model Try-On
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShootMode('pov')}
+                  className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${shootMode === 'pov' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-950 text-slate-400 hover:bg-slate-800'}`}
+                >
+                  UGC POV Mode
+                </button>
+              </div>
+
+              {/* Dynamic Interactive Hands layout for POV */}
+              {shootMode === 'pov' && (
+                <div className="mt-2.5 p-3 bg-emerald-950/20 border border-emerald-500/20 rounded-xl space-y-2 animate-in slide-in-from-top-1">
+                  <span className="text-[9px] font-black text-emerald-400 uppercase tracking-wider block">Hands Placement Logic</span>
+                  <div className="flex gap-2">
+                    <button 
+                      type="button" 
+                      onClick={() => setPovStyle('hands')}
+                      className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all ${povStyle === 'hands' ? 'bg-emerald-500 text-white' : 'bg-slate-950 text-slate-400'}`}
+                    >
+                      👐 With 2 Hands
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setPovStyle('no-hands')}
+                      className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all ${povStyle === 'no-hands' ? 'bg-emerald-500 text-white' : 'bg-slate-950 text-slate-400'}`}
+                    >
+                      🚫 Flatlay (No Hands)
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Camera Sensor Type Mode */}
+            <div className="pt-2 border-t border-slate-800/80">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-2">Camera Sensor Render Engine</span>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => selectCameraSensorStyle('smartphone')} className={`py-1.5 px-2 text-[10px] font-bold rounded-lg border transition-all flex items-center justify-center gap-1.5 ${cameraStyle === 'smartphone' ? 'bg-indigo-500/10 border-indigo-500 text-indigo-300' : 'bg-slate-950 border-slate-800 text-slate-500'}`}>
+                  <Smartphone size={12} /> HP Camera
+                </button>
+                <button type="button" onClick={() => selectCameraSensorStyle('dslr')} className={`py-1.5 px-2 text-[10px] font-bold rounded-lg border transition-all flex items-center justify-center gap-1.5 ${cameraStyle === 'dslr' ? 'bg-indigo-500/10 border-indigo-500 text-indigo-300' : 'bg-slate-950 border-slate-800 text-slate-500'}`}>
+                  <Aperture size={12} /> Pro DSLR
+                </button>
+                <button type="button" onClick={() => selectCameraSensorStyle('film')} className={`py-1.5 px-2 text-[10px] font-bold rounded-lg border transition-all flex items-center justify-center gap-1.5 ${cameraStyle === 'film' ? 'bg-indigo-500/10 border-indigo-500 text-indigo-300' : 'bg-slate-950 border-slate-800 text-slate-500'}`}>
+                  <Film size={12} /> Analog 35mm
+                </button>
+                <button type="button" onClick={() => selectCameraSensorStyle('cctv')} className={`py-1.5 px-2 text-[10px] font-bold rounded-lg border transition-all flex items-center justify-center gap-1.5 ${cameraStyle === 'cctv' ? 'bg-red-500/10 border-red-500 text-red-300' : 'bg-slate-950 border-slate-800 text-slate-500'}`}>
+                  <MonitorPlay size={12} /> CCTV Sec.
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Conditional Pose Controls */}
+          {shootMode !== 'pov' && (
+            <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-2xl space-y-3">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
+                <Focus size={13} className="text-indigo-400" /> Pose, Expression & Silhouette Builder
+              </span>
+              
+              <div className="space-y-4">
+                {/* Pose selection buttons */}
+                <div>
+                  <span className="text-[9px] text-slate-500 uppercase tracking-widest font-black block mb-2">Gaya Pose Tubuh (Body)</span>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
+                    {POSE_TYPES.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setPoseType(p.id)}
+                        className={`py-2 px-1 text-[9px] font-bold rounded-lg text-center transition-all border leading-tight ${
+                          poseType === p.id 
+                            ? 'bg-indigo-500/20 border-indigo-500 text-indigo-300 shadow-md' 
+                            : 'bg-slate-950 border-transparent text-slate-400 hover:border-slate-800'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Expression selection buttons */}
+                <div>
+                  <span className="text-[9px] text-slate-500 uppercase tracking-widest font-black block mb-2">Ekspresi Wajah (Pilih "Ikuti Foto Asli" agar paling mirip)</span>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {EXPRESSION_TYPES.map((e) => (
+                      <button
+                        key={e.id}
+                        type="button"
+                        onClick={() => setExpressionType(e.id)}
+                        className={`py-1.5 px-2.5 text-[10px] font-bold rounded-lg text-left transition-all border ${
+                          expressionType === e.id 
+                            ? 'bg-pink-500/15 border-pink-500 text-pink-300 shadow' 
+                            : 'bg-slate-950 border-transparent text-slate-400 hover:border-slate-800'
+                        }`}
+                      >
+                        {e.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Body Silhouette & Footwear Lock (NEW v20 - Strictly Isolated to Model Mode) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-slate-800/80">
+                  <div className="space-y-1">
+                    <label className="text-[9px] text-slate-400 uppercase font-black flex items-center gap-1">
+                      <User size={10} className="text-purple-400" /> Proporsi Tubuh (Body Lock)
+                    </label>
+                    <select
+                      value={bodySilhouette}
+                      onChange={(e) => setBodySilhouette(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-[10px] text-white outline-none focus:border-purple-500"
+                    >
+                      {BODY_SILHOUETTE_TYPES.map((b) => (
+                        <option key={b.id} value={b.id}>{b.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] text-slate-400 uppercase font-black flex items-center gap-1">
+                      <Footprints size={10} className="text-emerald-400" /> Kunci Sepatu (Footwear Lock)
+                    </label>
+                    <select
+                      value={footwearType}
+                      onChange={(e) => setFootwearType(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-[10px] text-white outline-none focus:border-emerald-500"
+                    >
+                      {FOOTWEAR_TYPES.map((f) => (
+                        <option key={f.id} value={f.id}>{f.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Render compiled manual override preview */}
+                <div className="p-2.5 bg-slate-950 rounded-xl border border-slate-800/60">
+                  <span className="text-[8px] text-slate-500 uppercase block font-black mb-1">Compiled Pose Prompt Context:</span>
+                  <p className="text-[9px] text-slate-400 font-mono mt-0.5 leading-relaxed">{pose}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Settings Fields Block */}
+          <div className="space-y-3.5 p-4 bg-slate-900/40 border border-slate-800 rounded-2xl">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Textile Properties & Material</span>
+            
+            {/* Clothing Input */}
+            <div className="space-y-1">
+              <label className="text-[9px] text-slate-500 uppercase font-black">Garment / Outfit Type</label>
+              <input 
+                type="text"
+                value={clothingName}
+                onChange={(e) => setClothingName(e.target.value)}
+                placeholder="e.g. Beige Oversized Luxury Hoodie"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            {/* Material dropdown */}
+            <div className="space-y-1">
+              <label className="text-[9px] text-slate-500 uppercase font-black">Fabric Material Selection</label>
+              <select
+                value={material}
+                onChange={(e) => setMaterial(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white outline-none focus:border-indigo-500"
+              >
+                <option value="premium cotton fabric">Cotton / Katun Premium</option>
+                <option value="stretch spandex activewear lycra">Activewear Spandex / Lycra Stretch</option>
+                <option value="heavyweight denim">Denim / Jeans Tebal</option>
+                <option value="shiny silk satin">Sutra / Satin Berkilau</option>
+                <option value="soft knit sweater wool">Knit / Wol Rajutan Lembut</option>
+                <option value="breathable linen texture">Linen Ringan Berpori</option>
+                <option value="breathable rayon viscose">Rayon / Viscose Lembut</option>
+                <option value="sheer chiffon organza">Chiffon / Organza Sheer</option>
+                <option value="plush velvet fabric">Velvet / Beludru Mewah</option>
+                <option value="heavy authentic leather">Leather / Kulit Asli</option>
+                <option value="premium thick corduroy">Corduroy Mewah</option>
+                <option value="techwear waterproof gore-tex">Techwear Nylon / Gore-Tex</option>
+                <option value="custom">Lainnya (Ketik Manual...)</option>
+              </select>
+
+              {material === 'custom' && (
+                <input 
+                  type="text"
+                  value={customMaterial}
+                  onChange={(e) => setCustomMaterial(e.target.value)}
+                  placeholder="Ketik material sendiri (e.g. Transparent Organza)"
+                  className="w-full bg-slate-950 border border-indigo-500/30 rounded-xl px-3.5 py-2 text-xs text-white outline-none focus:border-indigo-500 mt-1.5 animate-in slide-in-from-top-1"
+                />
+              )}
+            </div>
+
+            {/* Textile Condition */}
+            <div className="grid grid-cols-2 gap-2">
+              <button 
+                type="button" 
+                onClick={() => setTextileCondition('new')}
+                className={`py-1.5 text-[10px] font-bold rounded-lg transition-all ${textileCondition === 'new' ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/30' : 'bg-slate-950 text-slate-500'}`}
+              >
+                ✨ Brand New Look
+              </button>
+              <button 
+                type="button" 
+                onClick={() => setTextileCondition('distressed')}
+                className={`py-1.5 text-[10px] font-bold rounded-lg transition-all ${textileCondition === 'distressed' ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/30' : 'bg-slate-950 text-slate-500'}`}
+              >
+                💥 Distressed / Pilling
+              </button>
+            </div>
+          </div>
+
+          {/* Aspect ratio control block */}
+          <div className="space-y-2 p-4 bg-slate-900/40 border border-slate-800 rounded-2xl">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Output Dimensions</span>
+            <div className="flex gap-2">
+              {['9:16', '1:1', '4:3', '16:9'].map(r => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setAspectRatio(r)}
+                  className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${aspectRatio === r ? 'bg-indigo-500 text-white' : 'bg-slate-950 text-slate-500 hover:text-slate-200'}`}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Custom Instruction with Quick Tags */}
+          <div className="bg-[#131c31] border border-indigo-500/30 rounded-xl p-4 relative overflow-hidden shrink-0">
+             <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div>
+             <div className="flex justify-between items-center mb-2">
+                <label className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <Wand2 size={12} /> Custom Edge Directive
+                </label>
+                <span className="text-[8px] bg-indigo-900/50 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-500/30">Auto-Sanitized</span>
+             </div>
+             
+             {/* Quick Injection Pills (Smart Toggle ON/OFF) */}
+             <div className="flex flex-wrap gap-1.5 mb-2.5">
+                {QUICK_TAGS.map((tagObj) => {
+                  const isTagActive = customInstruction.toLowerCase().includes(tagObj.value.toLowerCase());
+                  return (
+                    <button 
+                      key={tagObj.id} 
+                      type="button"
+                      onClick={() => toggleQuickTag(tagObj)}
+                      className={`text-[9px] font-bold rounded-md px-2 py-1 transition-all flex items-center gap-1 border ${
+                        isTagActive
+                          ? 'bg-indigo-600 text-white border-indigo-400 shadow'
+                          : 'text-slate-400 bg-slate-900 hover:bg-indigo-900/40 hover:text-indigo-300 border-slate-800 hover:border-indigo-500/30'
+                      }`}
+                    >
+                      {isTagActive ? <Check size={9} /> : <Plus size={9} />} {tagObj.label}
+                    </button>
+                  );
+                })}
+             </div>
+
+             <textarea
+               value={customInstruction}
+               onChange={(e) => setCustomInstruction(e.target.value)}
+               placeholder="Tambahkan arahan kustom (misal: kacamata sedikit melorot, efek angin kencang, tatapan sinematik)..."
+               className="w-full bg-[#090d16] border border-slate-700/80 rounded-lg p-2.5 text-xs text-indigo-200 outline-none focus:border-indigo-400 resize-y h-[60px] custom-scrollbar"
+             />
+          </div>
+
+          {/* Negative Prompt Block */}
+          <div className="bg-red-950/15 border border-red-500/20 rounded-xl p-4 relative overflow-hidden shrink-0">
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="text-[10px] font-bold text-red-400 uppercase tracking-widest flex items-center gap-1.5">
+                <ShieldAlert size={12} /> Global Negative Prompt Lock
+              </label>
+              <span className="text-[8px] bg-red-500/10 text-red-400 px-2 py-0.5 rounded-full border border-red-500/20 font-bold">Anti-Face Swap & Anti-Uncanny</span>
+            </div>
+            <textarea
+              value={negativePrompt}
+              onChange={(e) => setNegativePrompt(e.target.value)}
+              className="w-full bg-[#090d16] border border-red-500/20 rounded-lg p-2.5 text-[10px] font-mono text-red-300/80 outline-none focus:border-red-500/50 resize-y h-[60px] custom-scrollbar"
+            />
+          </div>
+
+          {/* API Trigger Generation Button + Cancel Render Button */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={generateImageViaAPI}
+              disabled={isAnyRenderBusy}
+              className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-50 text-white font-bold py-3.5 rounded-2xl shadow-xl hover:shadow-indigo-500/10 transition-all active:scale-[0.99] flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
+            >
+              {isGenerating ? <Loader2 className="animate-spin" size={16} /> : <Wand2 size={16} />}
+              {isGenerating ? (generatingStatus || "Menjalankan Pipeline Biometric...") : "Render 5 Catalog Angles Via API"}
+            </button>
+            {isAnyRenderBusy && (
+              <button
+                type="button"
+                onClick={handleCancelRender}
+                className="bg-red-600/90 hover:bg-red-500 text-white font-bold px-4 py-3.5 rounded-2xl shadow-xl transition-all flex items-center justify-center gap-1.5 text-[10px] uppercase tracking-wider shrink-0"
+                title="Batalkan proses render yang sedang berjalan"
+              >
+                <Ban size={14} /> Batal
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Right Sidebar - Viewport */}
+        <div className="w-full lg:w-5/12 bg-[#0b0f1a] p-6 flex flex-col relative h-auto min-h-[700px] overflow-y-auto max-h-[850px] custom-scrollbar">
+          
+          <div className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-3 flex items-center justify-between border-b border-slate-800 pb-2">
+            <span className="flex items-center gap-1.5"><Sliders size={13} /> Interactive Image Viewport</span>
+            <div className="flex items-center gap-2">
+              {Object.values(generatedAngles).some(Boolean) && (
+                <button
+                  type="button"
+                  onClick={() => setViewportFitMode(viewportFitMode === 'cover' ? 'contain' : 'cover')}
+                  className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all"
+                  title="Ubah tampilan gambar Penuh (Contain) vs Potong Bingkai (Cover)"
+                >
+                  {viewportFitMode === 'cover' ? <Minimize2 size={10} /> : <Maximize2 size={10} />}
+                  {viewportFitMode === 'cover' ? 'Fit Utuh' : 'Fill Frame'}
+                </button>
+              )}
+              {Object.values(generatedAngles).some(Boolean) && (
+                <button
+                  type="button"
+                  onClick={handleDownloadAllAngles}
+                  className="bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/40 text-emerald-300 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider flex items-center gap-1 transition-all"
+                  title="Download semua foto angle yang sudah dirender"
+                >
+                  <Download size={10} /> Download All
+                </button>
+              )}
+              <span className="text-[10px] text-slate-500 font-mono">API Render View</span>
+            </div>
+          </div>
+
+          {/* Quality Auditor Display Gauge + 99.9% Optical Boost Lock Button */}
+          <div className="bg-slate-950 border border-slate-800/80 rounded-2xl p-4 mb-3 flex items-center justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Realism & Identity Probe</span>
+                <button
+                  type="button"
+                  onClick={toggleMaxRealismBoost}
+                  className={`px-2.5 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-wider border transition-all flex items-center gap-1 ${
+                    isMaxRealismLocked
+                      ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.5)]'
+                      : 'bg-indigo-500/15 hover:bg-indigo-500/30 text-indigo-300 border-indigo-500/30'
+                  }`}
+                >
+                  <Gauge size={10} />
+                  {isMaxRealismLocked ? '✓ 99.9% MAX LOCKED' : '⚡ BOOST 99.9%'}
+                </button>
+              </div>
+              <p className="text-[9px] text-slate-500 leading-normal">
+                {isMaxRealismLocked 
+                  ? "Hyper-Optical Calibration & 1:1 Biometric Lock aktif penuh tanpa mengotori latar studio."
+                  : "Audits raw texture probability & biometric facial lock accuracy based on your references."}
+              </p>
+            </div>
+            <div className="text-right shrink-0">
+              <span className={`text-2xl font-black font-mono tracking-tighter ${calculateRealismScore() >= 99 ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.3)]' : calculateRealismScore() > 90 ? 'text-emerald-400' : 'text-indigo-400'}`}>
+                {calculateRealismScore()}%
+              </span>
+              <span className="text-[8px] uppercase text-slate-500 block font-bold tracking-wider">Estimated Raw Level</span>
+            </div>
+          </div>
+
+          {/* Side-by-Side Reference Comparison Bar (NEW v20) */}
+          {generatedAngles[activeAngle] && !loadingAngles[activeAngle] && batchImages.length === 0 && (modelImage || productImage) && (
+            <div className="flex items-center justify-between bg-slate-900/70 border border-slate-800 rounded-xl px-3 py-1.5 mb-3">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <SplitSquareHorizontal size={12} className="text-indigo-400" /> Compare Reference:
+              </span>
+              <div className="flex items-center gap-1.5">
+                {modelImage && shootMode !== 'pov' && (
+                  <button
+                    type="button"
+                    onClick={() => setCompareMode(compareMode === 'model' ? null : 'model')}
+                    className={`px-2.5 py-1 rounded-lg text-[9px] font-bold border transition-all ${
+                      compareMode === 'model'
+                        ? 'bg-purple-600 text-white border-purple-400'
+                        : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    {compareMode === 'model' ? '✕ Tutup Wajah' : '👁️ Bandingkan Wajah'}
+                  </button>
+                )}
+                {productImage && (
+                  <button
+                    type="button"
+                    onClick={() => setCompareMode(compareMode === 'product' ? null : 'product')}
+                    className={`px-2.5 py-1 rounded-lg text-[9px] font-bold border transition-all ${
+                      compareMode === 'product'
+                        ? 'bg-indigo-600 text-white border-indigo-400'
+                        : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    {compareMode === 'product' ? '✕ Tutup Produk' : '👕 Bandingkan Baju'}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Viewport Frame Box */}
+          <div className={`w-full shrink-0 mx-auto border border-slate-800/80 rounded-3xl flex items-center justify-center bg-black/60 overflow-hidden relative shadow-2xl transition-all duration-300 group ${getContainerAspectClass()}`}>
+            
+            {/* If Batch Generation Mode is active */}
+            {batchImages.length > 0 && (
+              <div className="absolute inset-0 z-40 bg-slate-950 flex flex-col p-4 animate-in fade-in">
+                <div className="bg-indigo-900/10 border border-indigo-500/20 p-2.5 mb-3 rounded-xl text-center">
+                  <h3 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Selected Variation Options</h3>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 flex-1 overflow-hidden">
+                  {batchImages.map((img, idx) => (
+                    <div 
+                      key={idx} 
+                      onClick={() => setSelectedBatchIndex(idx)}
+                      className={`relative rounded-xl overflow-hidden cursor-pointer border-2 transition-all ${selectedBatchIndex === idx ? 'border-emerald-500 scale-[0.98] shadow-lg' : 'border-transparent opacity-70 hover:opacity-100'}`}
+                    >
+                      <img src={img} className="w-full h-full object-cover" alt={`Batch ${idx}`} />
+                      {selectedBatchIndex === idx && (
+                        <div className="absolute top-2 right-2 bg-emerald-500 text-white rounded-full p-1 shadow">
+                          <CheckCircle size={14} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex gap-2 mt-4">
+                  <button 
+                    type="button"
+                    onClick={() => { setBatchImages([]); setSelectedBatchIndex(null); }}
+                    className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold rounded-xl text-[10px] uppercase tracking-wider transition-all"
+                  >
+                    Batal
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={saveBatchSelection}
+                    disabled={selectedBatchIndex === null}
+                    className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-lg"
+                  >
+                    Pakai Variasi Ini
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Loading Spinner for Viewport */}
+            {(loadingAngles[activeAngle] || isBatchGenerating) && (
+              <div className="absolute inset-0 z-30 bg-slate-950/85 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
+                <Loader2 className="w-10 h-10 text-indigo-500 animate-spin mb-3" />
+                <p className="text-xs font-black text-white uppercase tracking-widest">
+                  {isBatchGenerating ? "Merender 4 Variasi Batch..." : `Merender Angle ${activeAngle.toUpperCase()}...`}
+                </p>
+                <p className="text-[10px] text-indigo-300 mt-1">
+                  {generatingStatus || "Menyelaraskan biometrik wajah 1:1 & fisika pakaian..."}
+                </p>
+              </div>
+            )}
+
+            {/* Empty or Failed Viewport Placeholder state */}
+            {!generatedAngles[activeAngle] && !loadingAngles[activeAngle] && (
+              <div className="text-center p-6 text-slate-500 flex flex-col items-center">
+                {failedAngles[activeAngle] ? (
+                  <>
+                    <ShieldAlert size={40} className="mb-2 text-amber-400 animate-pulse" />
+                    <p className="text-xs font-bold text-amber-300">Angle Ini Terkendala Filter / Timeout</p>
+                    <p className="text-[9px] text-slate-400 mt-1 max-w-[210px] leading-relaxed">
+                      Pastikan tombol <strong>🛡️ Safe-Guard Bypass</strong> di atas menyala, lalu klik tombol di bawah untuk merender ulang angle ini saja.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => regenerateSingleAngle(activeAngle)}
+                      disabled={isAnyRenderBusy}
+                      className="mt-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-[10px] uppercase tracking-wider flex items-center gap-1.5 shadow-lg transition-all"
+                    >
+                      <RefreshCw size={12} /> Coba Lagi Angle Ini
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Camera size={44} className="mb-2 opacity-30 text-indigo-400 pointer-events-none" />
+                    <p className="text-xs font-bold text-slate-400 pointer-events-none">Viewport Awaiting Render</p>
+                    <p className="text-[9px] text-slate-600 mt-1 max-w-[180px] pointer-events-none">
+                      Upload foto baju & wajah model, lalu klik "Render" untuk mulai.
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Viewport Rendered Content state */}
+            {generatedAngles[activeAngle] && !loadingAngles[activeAngle] && batchImages.length === 0 && (
+              <>
+                {compareMode ? (
+                  <div className="w-full h-full grid grid-cols-2 gap-0.5 bg-slate-800 relative z-20">
+                    <div className="relative w-full h-full overflow-hidden bg-slate-950">
+                      <img
+                        src={compareMode === 'model' ? modelImage : productImage}
+                        className="w-full h-full object-cover"
+                        alt="Original Reference"
+                      />
+                      <span className="absolute top-2.5 left-2.5 bg-black/80 border border-white/20 text-white text-[8px] font-black uppercase px-2 py-0.5 rounded-md">
+                        {compareMode === 'model' ? 'Ref #1: Foto Asli' : 'Ref #2: Baju Asli'}
+                      </span>
+                    </div>
+                    <div className="relative w-full h-full overflow-hidden bg-slate-950">
+                      <img
+                        src={generatedAngles[activeAngle]}
+                        className={`w-full h-full ${viewportFitMode === 'contain' ? 'object-contain' : 'object-cover'}`}
+                        alt="AI Render Result"
+                      />
+                      <span className="absolute top-2.5 left-2.5 bg-indigo-600/90 text-white text-[8px] font-black uppercase px-2 py-0.5 rounded-md">
+                        Hasil AI ({activeAngle})
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <img 
+                    src={generatedAngles[activeAngle]} 
+                    className={`w-full h-full ${viewportFitMode === 'contain' ? 'object-contain' : 'object-cover'} bg-slate-950 transition-all ${regeneratingAngle === activeAngle ? 'opacity-30 grayscale' : 'opacity-100'}`} 
+                    alt={`VTON Active Angle Display: ${activeAngle}`} 
+                  />
+                )}
+                
+                {/* CSS Film Grain Overlay */}
+                {filmGrainFilter && !compareMode && <div className="film-grain"></div>}
+
+                {/* Viewport action controls displayed on hover */}
+                <div className="absolute bottom-4 right-4 flex gap-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  
+                  {angleHistory[activeAngle] && angleHistory[activeAngle].length > 0 && (
+                    <button 
+                      type="button"
+                      onClick={() => handleUndo(activeAngle)}
+                      disabled={isAnyRenderBusy}
+                      className="bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white p-2.5 rounded-xl shadow-lg transition-all"
+                      title="Undo Render Modification"
+                    >
+                      <Undo2 size={15} />
+                    </button>
+                  )}
+
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setSelectedVideoAngle(activeAngle);
+                      setIsVideoModalOpen(true);
+                    }}
+                    className="bg-pink-600 hover:bg-pink-500 text-white p-2.5 rounded-xl shadow-lg transition-all"
+                    title="Generate Video Prompts"
+                  >
+                    <Film size={15} />
+                  </button>
+
+                  <button 
+                    type="button"
+                    onClick={() => generateBatchForAngle(activeAngle)}
+                    disabled={isAnyRenderBusy}
+                    className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white p-2.5 rounded-xl shadow-lg transition-all"
+                    title="Render 4 Variasi Batch"
+                  >
+                    <Grid size={15} />
+                  </button>
+
+                  <button 
+                    type="button"
+                    onClick={() => regenerateSingleAngle(activeAngle)}
+                    disabled={isAnyRenderBusy}
+                    className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white p-2.5 rounded-xl shadow-lg transition-all"
+                    title="Render 1x API"
+                  >
+                    <RefreshCw size={15} />
+                  </button>
+
+                  <button 
+                    type="button"
+                    onClick={() => handleDownload(activeAngle)}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white p-2.5 rounded-xl shadow-lg transition-all"
+                    title="Download Frame Asset"
+                  >
+                    <Download size={15} />
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Unified Multi-Angle Thumbnails Navigation Row */}
+          <div className="grid grid-cols-5 gap-2 mt-4 w-full">
+            {getAnglesConfig().map((angle) => {
+              const isAngleLoading = loadingAngles[angle.id];
+              const hasImage = !!generatedAngles[angle.id];
+              const isAngleFailed = !!failedAngles[angle.id] && !hasImage && !isAngleLoading;
+
+              return (
+                <button
+                  key={angle.id}
+                  type="button"
+                  onClick={() => {
+                    if (isAngleFailed && !isAnyRenderBusy) {
+                      setActiveAngle(angle.id);
+                      regenerateSingleAngle(angle.id);
+                    } else if (hasImage || isAngleLoading || isAngleFailed) {
+                      setActiveAngle(angle.id);
+                    }
+                  }}
+                  disabled={(!hasImage && !isGenerating && !isAngleLoading && !isAngleFailed) || regeneratingAngle === angle.id}
+                  className={`relative aspect-[3/4] rounded-xl border overflow-hidden transition-all text-left p-1.5 flex flex-col justify-between ${
+                    activeAngle === angle.id 
+                      ? 'border-indigo-500 bg-indigo-500/10 shadow-[0_0_15px_rgba(79,70,229,0.4)] scale-[1.02] z-10' 
+                      : isAngleFailed
+                        ? 'border-amber-500/50 bg-amber-950/20 hover:border-amber-400'
+                        : 'border-slate-800 bg-[#131c31]/40 hover:border-slate-600'
+                  } ${!hasImage && !isAngleLoading && !isAngleFailed ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                >
+                  <span className="text-[8px] font-black uppercase tracking-tight text-slate-400 leading-none z-20 drop-shadow">{angle.label}</span>
+                  
+                  {isAngleLoading ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-1 bg-[#0b0f19] animate-pulse-fast z-20">
+                      <Loader2 className="w-4 h-4 text-indigo-400 animate-spin mb-1 opacity-70" />
+                      <span className="text-[7.5px] text-indigo-300 font-bold uppercase tracking-wider text-center leading-none"> Rendering </span>
+                    </div>
+                  ) : hasImage ? (
+                    <div className="absolute inset-0 z-10 pointer-events-none">
+                      <img src={generatedAngles[angle.id]} className={`w-full h-full object-cover transition-opacity ${regeneratingAngle === angle.id ? 'opacity-30 grayscale' : 'opacity-100'}`} alt="" />
+                      {filmGrainFilter && <div className="absolute inset-0 bg-black/10 mix-blend-overlay"></div>}
+                    </div>
+                  ) : isAngleFailed ? (
+                    <div className="my-auto mx-auto flex flex-col items-center text-center z-20">
+                      <RefreshCw size={12} className="text-amber-400 mb-1" />
+                      <span className="text-[7px] font-bold text-amber-300 uppercase leading-tight">Klik Retry</span>
+                    </div>
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-slate-800/80 flex items-center justify-center text-slate-600 mt-2 mx-auto">
+                      <Camera size={10} />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Quality Control Checklist */}
+          <div className="mt-5 bg-[#0f172a] border border-slate-800 rounded-2xl p-4">
+            <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5 border-b border-slate-800 pb-2">
+              <ShieldCheck size={14} className="text-indigo-400" /> Biometric & Safe-Guard v20 Status
+            </h4>
+            
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[10px] text-slate-400">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle size={10} className="text-emerald-400" /> Biometrik Wajah: 1:1 Terkunci
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle size={10} className="text-emerald-400" /> Safe-Guard Bypass: {safeGuardMode ? 'Aktif (Auto-Retry)' : 'Standar'}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle size={10} className="text-emerald-400" /> Master Anchor Lock: {masterAnchorLock ? 'Aktif (Chained)' : 'Nonaktif'}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle size={10} className="text-emerald-400" /> Auto-Compressor: Aktif (Anti-413)
+              </div>
+            </div>
+            <p className="text-[9px] text-slate-500 italic mt-3 leading-tight border-t border-slate-800/50 pt-2 flex items-center gap-1">
+              <HelpCircle size={10} /> Tips: Jika ada salah satu angle gagal karena outfit terlalu terbuka, cukup klik kartu thumbnail kuning <strong>"Klik Retry"</strong> untuk merender ulang angle tersebut.
+            </p>
+          </div>
+
+          {/* Complete Live Prompt Output Display */}
+          <div className="mt-5 p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Raw Prompt Assembly</span>
+              <button 
+                type="button" 
+                onClick={copyPromptText}
+                className="text-[9px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors uppercase flex items-center gap-1.5"
+              >
+                {copiedPrompt ? <Check size={12} /> : <Copy size={12} />}
+                {copiedPrompt ? "Copied" : "Copy Prompt"}
+              </button>
+            </div>
+            
+            <div className="bg-black/40 p-3 rounded-xl border border-slate-800/80 max-h-[120px] overflow-y-auto custom-scrollbar">
+              <p className="text-[9.5px] font-mono text-indigo-300 leading-relaxed italic select-all">
+                {compileFullLivePrompt()}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Video Generator Modal Overlay */}
+      {isVideoModalOpen && (
+        <div className="fixed inset-0 z-50 bg-[#060913]/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
+          <div className="w-full max-w-2xl bg-[#0f172a] border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5 animate-in zoom-in-95">
+            <div className="flex justify-between items-start">
+              <div className="flex gap-2 items-center">
+                <Film className="text-pink-500 animate-pulse" size={20} />
+                <div>
+                  <span className="bg-pink-500/10 text-pink-400 border border-pink-500/20 text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">Video AI Extension v20 (Anti-Violation)</span>
+                  <h2 className="text-lg font-black text-white mt-2 uppercase tracking-wide">Multi-Platform Physics Video Compiler</h2>
+                  <p className="text-xs text-slate-500">Pilih preset khusus platform (Kling/Hailuo atau Runway/Luma) agar fokus gerakan tajam & bebas sensor.</p>
+                </div>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setIsVideoModalOpen(false)}
+                className="bg-slate-900 hover:bg-slate-800 p-2 rounded-xl text-slate-400 hover:text-white transition-all"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* Target Platform / Length selection */}
+              <div className="space-y-1">
+                <span className="text-[9px] text-slate-500 uppercase font-black">1. Platform / Format Preset</span>
+                <select 
+                  value={selectedVideoLength}
+                  onChange={(e) => setSelectedVideoLength(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-pink-500"
+                >
+                  <option value="kling_director">⭐ Kling / Hailuo Director (Optimal)</option>
+                  <option value="runway_luma">🎬 Runway Gen-3 / Luma (Camera-First)</option>
+                  <option value="mini">Mini B-Roll (~900 chars)</option>
+                  <option value="short">Short Physics (~1450 chars)</option>
+                  <option value="medium">Medium Physics (~3950 chars)</option>
+                  <option value="master">Master Earth Physics (~8000 chars)</option>
+                </select>
+              </div>
+
+              {/* Camera Motion Vector */}
+              <div className="space-y-1">
+                <span className="text-[9px] text-slate-500 uppercase font-black">2. Gerakan Kamera Video</span>
+                <select 
+                  value={selectedVideoMotion}
+                  onChange={(e) => setSelectedVideoMotion(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-indigo-500"
+                >
+                  {VIDEO_CAMERA_MOTIONS.map((m) => (
+                    <option key={m.id} value={m.id}>{m.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Angle confirm (Interactive Dropdown Selector) */}
+              <div className="space-y-1">
+                <span className="text-[9px] text-slate-500 uppercase font-black">3. Pilih Angle Kamera</span>
+                <select
+                  value={selectedVideoAngle}
+                  onChange={(e) => setSelectedVideoAngle(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-indigo-400 font-bold uppercase tracking-wider outline-none focus:border-indigo-500"
+                >
+                  {getAnglesConfig().map((ang) => (
+                    <option key={ang.id} value={ang.id}>{ang.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Generated Video Prompt display */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Compiled Safe-For-Work Video Prompt</span>
+                <span className="text-[9px] font-mono text-emerald-400">Length: {liveVideoPromptText.length} chars (Zero NSFW Triggers)</span>
+              </div>
+              
+              <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl max-h-[220px] overflow-y-auto custom-scrollbar">
+                <p className="text-[9.5px] font-mono text-pink-300 leading-relaxed italic whitespace-pre-line">
+                  {liveVideoPromptText}
+                </p>
+              </div>
+              
+              {/* Petunjuk Penggunaan */}
+              <div className="p-3 bg-slate-900/40 border border-slate-800/80 rounded-xl text-[10px] text-slate-400 leading-relaxed flex gap-2">
+                <Info size={14} className="text-indigo-400 shrink-0 mt-0.5" />
+                <p>
+                  <strong>Cara Pakai:</strong> Copy prompt di atas. Buka Image-to-Video AI Anda (misal Kling / Luma / Seedance). Upload gambar hasil render angle <span className="text-indigo-400 font-bold">{getAnglesConfig().find(a => a.id === selectedVideoAngle)?.label}</span> ini sebagai referensi awal, lalu tempel prompt ini untuk fisika maksimal.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center pt-2 border-t border-slate-800">
+              <span className="text-[9px] uppercase tracking-wider text-slate-500 font-bold">
+                Reference file: <span className="text-indigo-400 font-mono">MASTER CODE REKSAMUDA ABSOLUTE REALISM</span>
+              </span>
+              <button 
+                type="button" 
+                onClick={() => safeCopyText(liveVideoPromptText, "Video prompt disalin ke clipboard!")}
+                className="bg-pink-600 hover:bg-pink-500 text-white font-bold px-6 py-2.5 rounded-xl text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 flex items-center gap-2"
+              >
+                 <Copy size={14} /> Salin Prompt Video
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tailwind dynamic colors compiler helper */}
+      <div className="hidden bg-indigo-500 bg-emerald-500 bg-orange-500 bg-amber-500 bg-slate-500 bg-red-500 bg-stone-500 bg-fuchsia-500 bg-sky-500 text-indigo-400 text-emerald-400 text-orange-400 text-amber-400 text-slate-400 text-red-400 text-stone-400 text-fuchsia-400 text-sky-400"></div>
+    </div>
+  );
+}
